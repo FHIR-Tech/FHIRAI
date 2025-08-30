@@ -1,8 +1,133 @@
 # Healthcare Data Pattern Reference Guide
 
+## Project Overview
+- **Technology Stack**: FHIR/HL7
+- **Purpose**: FHIRAI FHIR-compliant backend with AI integration capabilities
+- **Architecture**: Multi-tenant, secure, scalable healthcare data platform
+
 ## Overview
 
 This document defines the **immutable Healthcare Data Pattern standards** for the FHIR-AI Backend project. These standards should **NEVER change**, regardless of Microsoft's framework updates or new patterns. They ensure consistency, maintainability, and proper handling of healthcare data in compliance with FHIR standards and healthcare regulations.
+
+## Core Architecture Principles
+
+### 1. FHIR Compliance & Standards
+- **FHIR Resources**: Stored in PostgreSQL JSONB with GIN indexes
+- **Multi-tenancy**: Row-Level Security (RLS) by tenant
+- **HL7 v2 Integration**: NHapi for parsing, Firely SDK for FHIR mapping
+- **SMART on FHIR**: OAuth2/OpenID Connect authentication with scope enforcement
+
+### 2. Security & Compliance
+- **Authentication**: SMART on FHIR (patient/*, user/*, system/* scopes)
+- **Data Protection**: pgcrypto encryption for sensitive columns
+- **Audit Trail**: FHIR `AuditEvent` resources, append-only logging
+- **Privacy**: No PII in application logs
+- **RLS**: Mandatory Row-Level Security in production
+
+### 3. API Layer Pattern Recognition (Critical Decision Matrix)
+Cursor AI MUST automatically determine the correct API pattern based on the feature type:
+
+**1. FHIR Healthcare Resources → Minimal API (MANDATORY)**
+- **Trigger Keywords**: `Patient`, `Observation`, `Medication`, `Condition`, `Encounter`, `FHIR`, `healthcare`, `medical`, `clinical`
+- **Pattern**: Minimal API Endpoints
+- **Location**: `Web/Endpoints/FhirEndpoints.cs`
+- **Routes**: `/fhir/{resourceType}`, `/fhir/{resourceType}/{id}`
+- **Reason**: FHIR standards require specific route patterns and response formats
+
+**2. Business/System Resources → Controller (RECOMMENDED)**
+- **Trigger Keywords**: `tenant`, `user`, `news`, `notification`, `report`, `audit`, `configuration`, `system`, `admin`
+- **Pattern**: Traditional Controller
+- **Location**: `HealthTech.API/Controllers/{Entity}Controller.cs`
+- **Routes**: `/api/{entity}`, `/api/{entity}/{id}`
+- **Reason**: Standard RESTful patterns, easier CRUD operations
+
+**3. Special Operations → Minimal API (FLEXIBLE)**
+- **Trigger Keywords**: `authentication`, `health`, `export`, `import`, `batch`, `bulk`
+- **Pattern**: Minimal API Endpoints
+- **Location**: `HealthTech.API/Endpoints/{Feature}Endpoints.cs`
+- **Routes**: `/auth/*`, `/health/*`, `/export/*`
+- **Reason**: Specialized operations with custom logic
+
+## Technology Stack & Implementation Details
+
+### Database & Storage
+- **Primary Database**: PostgreSQL with JSONB support for FHIR resources
+- **Indexing**: GIN indexes on JSONB columns for efficient FHIR resource queries
+- **Encryption**: pgcrypto for sensitive data encryption at rest
+- **Multi-tenancy**: Row-Level Security (RLS) policies for tenant isolation
+
+### FHIR Implementation
+- **FHIR Version**: R4B (latest stable)
+- **SDK**: Local Hl7.Fhir.R4B SDK clone (readonly)
+- **Serialization**: FHIR JSON format with proper validation
+- **Extensions**: Custom FHIR extensions for healthcare-specific data
+
+### Authentication & Authorization
+- **SMART on FHIR**: OAuth2/OpenID Connect implementation
+- **Scopes**: patient/*, user/*, system/* scope enforcement
+- **JWT Tokens**: FHIR-compliant JWT token handling
+- **Role-based Access**: Healthcare role-based access control (RBAC)
+
+### Integration Capabilities
+- **HL7 v2**: NHapi library for HL7 v2 message parsing
+- **FHIR Mapping**: Firely SDK for HL7 v2 to FHIR mapping
+- **AI Integration**: Azure OpenAI integration for healthcare AI features
+- **External Systems**: FHIR Gateway for external system integration
+
+### Monitoring & Observability
+- **Audit Trail**: FHIR AuditEvent resources for all data access
+- **Logging**: Structured logging with no PII exposure
+- **Metrics**: Healthcare-specific metrics and KPIs
+- **Health Checks**: FHIR-compliant health check endpoints
+
+## Development Workflow & Decision-Making Process
+
+### Cursor AI Decision Matrix for Healthcare Features
+
+When developing new features, Cursor AI MUST follow this decision process:
+
+#### Step 1: Feature Classification
+1. **Analyze the feature request** for healthcare-related keywords
+2. **Determine the resource type** (FHIR healthcare vs business/system)
+3. **Identify the operation type** (CRUD, search, special operations)
+
+#### Step 2: Pattern Selection
+Based on the classification, automatically select the appropriate pattern:
+
+**Healthcare Data Features (FHIR Resources)**
+- **Pattern**: Minimal API with FHIR R4B resources
+- **Location**: `Web/Endpoints/FhirEndpoints.cs`
+- **Validation**: FHIR R4B validation required
+- **Security**: SMART on FHIR authentication + RLS
+
+**Business/System Features**
+- **Pattern**: Traditional Controller with DTOs
+- **Location**: `Web/Controllers/{Entity}Controller.cs`
+- **Validation**: FluentValidation
+- **Security**: Standard JWT authentication
+
+**Special Operations**
+- **Pattern**: Minimal API with custom logic
+- **Location**: `Web/Endpoints/{Feature}Endpoints.cs`
+- **Validation**: Custom validation logic
+- **Security**: Based on operation type
+
+#### Step 3: Implementation Guidelines
+- **Always use FHIR R4B resources for healthcare data**
+- **Implement proper audit logging for all healthcare operations**
+- **Apply Row-Level Security for multi-tenant isolation**
+- **Use FHIR-compliant error responses (OperationOutcome)**
+- **Follow FHIR search parameter standards**
+
+### Quick Reference for Common Scenarios
+
+| Feature Type | Pattern | Location | Authentication | Validation |
+|--------------|---------|----------|----------------|------------|
+| Patient Management | Minimal API | FhirEndpoints.cs | SMART on FHIR | FHIR R4B |
+| User Management | Controller | UserController.cs | JWT | FluentValidation |
+| Health Check | Minimal API | HealthEndpoints.cs | None | Custom |
+| Data Export | Minimal API | ExportEndpoints.cs | JWT | Custom |
+| Audit Logging | Controller | AuditController.cs | JWT | FluentValidation |
 
 ## Core Healthcare Data Principles (Immutable)
 
