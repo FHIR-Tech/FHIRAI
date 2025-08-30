@@ -1,0 +1,125 @@
+# FHIRAI - Cursor AI Project Index
+
+## 🏗️ Project Overview
+**FHIRAI** - Clean Architecture ASP.NET Core app with CQRS, PostgreSQL, Azure deployment. Template: Clean.Architecture.Solution.Template v9.0.12.
+
+## 📁 Core Structure
+```
+src/
+├── Domain/           # Business entities, value objects, events
+├── Application/      # Commands, queries, handlers, DTOs  
+├── Infrastructure/   # Database, external services, identity
+└── Web/             # API endpoints, configuration
+```
+
+## 🔍 Keyword Mapping to Documentation
+
+### Architecture & Patterns
+- **Clean Architecture** → `docs/CURSOR_AI_RULES.md` → Architecture Checklist
+- **CQRS** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Implementation Patterns
+- **SOLID** → `docs/CURSOR_AI_RULES.md` → Design Patterns Checklist
+- **Domain-Driven Design** → `docs/CURSOR_AI_RULES.md` → Layer Responsibilities
+
+### Development Workflow
+- **New Feature** → `docs/IMPLEMENTATION_CHECKLIST.md` → Feature Implementation Checklist
+- **Code Generation** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Code Generation Commands
+- **Testing** → `docs/CURSOR_AI_RULES.md` → Testing Rules
+- **Code Review** → `docs/IMPLEMENTATION_CHECKLIST.md` → Code Review Checklist
+
+### Security & Authentication
+- **Authentication** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Authorization** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Security Rules
+- **JWT** → `README.md` → Authentication Flow
+- **Azure Key Vault** → `README.md` → Security Features
+
+### Database & Infrastructure
+- **Entity Framework** → `docs/CURSOR_AI_RULES.md` → Database Rules
+- **PostgreSQL** → `docs/CURSOR_AI_RULES.md` → PostgreSQL Configuration
+- **Migrations** → `docs/IMPLEMENTATION_CHECKLIST.md` → Database Implementation
+- **Azure Bicep** → `README.md` → Azure Infrastructure
+
+### API Development
+- **Endpoints** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
+- **Minimal APIs** → `docs/CURSOR_AI_RULES.md` → Presentation Layer Implementation
+- **Swagger** → `README.md` → API Documentation
+- **Validation** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Command Pattern
+
+### Code Quality
+- **Naming Conventions** → `docs/CURSOR_AI_RULES.md` → Naming Conventions
+- **Code Organization** → `docs/CURSOR_AI_RULES.md` → Code Quality Standards
+- **Performance** → `docs/CURSOR_AI_RULES.md` → Performance Guidelines
+- **Error Handling** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Common Mistakes
+
+## 🚀 Quick Commands
+```bash
+# Build & Run
+dotnet build -tl
+cd ./src/Web/ && dotnet watch run
+
+# Code Generation
+dotnet new ca-usecase --name Create[Entity] --feature-name [FeatureName] --usecase-type command --return-type int
+dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities]Vm
+
+# Testing
+dotnet test
+
+# Azure Deployment
+az login && azd up
+```
+
+## 📁 Key File Locations
+- **Domain Entities**: `src/Domain/Entities/`
+- **Application Commands**: `src/Application/[FeatureName]/Commands/`
+- **Application Queries**: `src/Application/[FeatureName]/Queries/`
+- **API Endpoints**: `src/Web/Endpoints/`
+- **Database Context**: `src/Infrastructure/Data/ApplicationDbContext.cs`
+- **Infrastructure**: `infra/main.bicep`
+
+## 🏷️ Naming Patterns
+- **Entities**: `{EntityName}.cs`
+- **Commands**: `{CommandName}Command.cs`, `{CommandName}CommandHandler.cs`
+- **Queries**: `{QueryName}Query.cs`, `{QueryName}QueryHandler.cs`
+- **DTOs**: `{EntityName}Dto.cs`, `{EntityName}Vm.cs`
+- **Endpoints**: `{EntityName}.cs`
+- **Configurations**: `{EntityName}Configuration.cs`
+
+## 🎯 Common Tasks Quick Guide
+
+### Creating New Entity
+1. **Domain**: Create entity in `src/Domain/Entities/`
+2. **Application**: Create commands/queries in `src/Application/[FeatureName]/`
+3. **Infrastructure**: Add to `ApplicationDbContext` and create configuration
+4. **Web**: Create endpoints in `src/Web/Endpoints/`
+
+### Adding New Endpoint
+1. Create endpoint class in `src/Web/Endpoints/`
+2. Implement HTTP methods with authorization
+3. Add to endpoint group mapping
+4. Update OpenAPI documentation
+
+### Database Changes
+1. Update entity in Domain layer
+2. Create EF Core configuration
+3. Generate migration: `dotnet ef migrations add [MigrationName]`
+4. Update database: `dotnet ef database update`
+
+## 🚨 Common Issues
+- **Template Missing**: `dotnet new install Clean.Architecture.Solution.Template::9.0.12`
+- **Build Issues**: Check `Directory.Packages.props` for version conflicts
+- **Database Connection**: Verify connection string in `appsettings.Development.json`
+- **Authentication**: Check JWT configuration and Azure Key Vault
+
+## 📚 Reference Documents
+- **Master Structure**: `docs/DOCUMENTATION_STRUCTURE.md` - Complete documentation navigation
+- **Development Rules**: `docs/CURSOR_AI_RULES.md` - Comprehensive development guidelines
+- **Quick Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
+- **Implementation Guide**: `docs/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation
+- **Project Overview**: `README.md` - Setup, architecture, deployment
+
+---
+
+**🎯 Remember**: Always follow Clean Architecture principles, use CQRS pattern, implement proper validation and authorization, and maintain high test coverage. When in doubt, refer to existing implementations in `src/Application/TodoItems/` as reference patterns.
+description:
+globs:
+alwaysApply: true
+---
