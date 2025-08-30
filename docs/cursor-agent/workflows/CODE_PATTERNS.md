@@ -415,19 +415,66 @@ public class TodoItems : EndpointGroupBase
 
 ### 5. Entity Patterns
 
-#### Domain Entity (Current Template)
+#### Base Entity Inheritance Guide
+
+##### When to Use BaseEntity vs BaseAuditableEntity
+
+```csharp
+// Use BaseEntity for simple entities without audit requirements
+public class SimpleEntity : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    
+    // Inherits: Id, DomainEvents, AddDomainEvent(), RemoveDomainEvent(), ClearDomainEvents()
+}
+
+// Use BaseAuditableEntity for entities requiring audit trail
+public class AuditableEntity : BaseAuditableEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    
+    // Inherits: Id, Created, CreatedBy, LastModified, LastModifiedBy, DomainEvents
+    // Auto-populated by AuditableEntityInterceptor
+}
+```
+
+##### Entity Creation Checklist
+
 ```csharp
 public class TodoItem : BaseAuditableEntity
 {
+    // 1. Required Properties
     public int ListId { get; set; }
     public string? Title { get; set; }
-    public bool Done { get; set; }
-    public PriorityLevel Priority { get; set; }
-    public string? Note { get; set; }
     
+    // 2. Optional Properties
+    public string? Note { get; set; }
+    public PriorityLevel Priority { get; set; }
+    public DateTime? Reminder { get; set; }
+    
+    // 3. Navigation Properties
     public TodoList List { get; set; } = null!;
-
-    // Business logic methods
+    
+    // 4. Private Fields for Encapsulation
+    private bool _done;
+    
+    // 5. Public Properties with Business Logic
+    public bool Done
+    {
+        get => _done;
+        set
+        {
+            if (value && !_done)
+            {
+                AddDomainEvent(new TodoItemCompletedEvent(this));
+            }
+            _done = value;
+        }
+    }
+    
+    // 6. Business Logic Methods
     public void MarkComplete()
     {
         if (Done) return;
@@ -451,6 +498,91 @@ public class TodoItem : BaseAuditableEntity
         var oldPriority = Priority;
         Priority = newPriority;
         AddDomainEvent(new TodoItemPriorityChangedEvent(this, oldPriority, newPriority));
+    }
+    
+    // 7. Validation Methods (Optional)
+    public bool IsValid()
+    {
+        return !string.IsNullOrEmpty(Title) && ListId > 0;
+    }
+}
+```
+
+##### Entity Configuration Pattern
+
+```csharp
+// src/Infrastructure/Data/Configurations/TodoItemConfiguration.cs
+public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
+{
+    public void Configure(EntityTypeBuilder<TodoItem> builder)
+    {
+        // Table configuration
+        builder.ToTable("TodoItems");
+        
+        // Primary key
+        builder.HasKey(x => x.Id);
+        
+        // Properties configuration
+        builder.Property(x => x.Title)
+            .HasMaxLength(200)
+            .IsRequired();
+            
+        builder.Property(x => x.Note)
+            .HasMaxLength(1000);
+            
+        builder.Property(x => x.Priority)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+            
+        // Relationships
+        builder.HasOne(x => x.List)
+            .WithMany(x => x.Items)
+            .HasForeignKey(x => x.ListId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        // Indexes
+        builder.HasIndex(x => x.ListId);
+        builder.HasIndex(x => x.Done);
+        builder.HasIndex(x => x.Priority);
+        
+        // Query filters (for soft delete if implemented)
+        // builder.HasQueryFilter(x => !x.IsDeleted);
+    }
+}
+```
+
+##### Domain Event Pattern
+
+```csharp
+// Domain Event
+public class TodoItemCompletedEvent : BaseEvent
+{
+    public TodoItemCompletedEvent(TodoItem item)
+    {
+        Item = item;
+    }
+
+    public TodoItem Item { get; }
+}
+
+// Event Handler
+public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemCompletedEvent>
+{
+    private readonly ILogger<TodoItemCompletedEventHandler> _logger;
+
+    public TodoItemCompletedEventHandler(ILogger<TodoItemCompletedEventHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task Handle(TodoItemCompletedEvent notification, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("FHIRAI Domain: TodoItem {Id} was completed", notification.Item.Id);
+        
+        // Handle side effects here
+        // e.g., send notifications, update statistics, etc.
+        
+        await Task.CompletedTask;
     }
 }
 ```
@@ -908,33 +1040,318 @@ public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehaviour<TReq
 }
 ```
 
-### 14. Structured Logging Pattern
+### 14. Comprehensive Logging Patterns
 
-#### Logging Behaviour
+#### Logging Behaviour (Request/Response Logging)
 ```csharp
-public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehaviour<TRequest, TResponse>
+public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>
     where TRequest : notnull
 {
-    private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> _logger;
+    private readonly ILogger _logger;
+    private readonly IUser _user;
+    private readonly IIdentityService _identityService;
 
-    public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
+    public LoggingBehaviour(ILogger<TRequest> logger, IUser user, IIdentityService identityService)
+    {
+        _logger = logger;
+        _user = user;
+        _identityService = identityService;
+    }
+
+    public async Task Process(TRequest request, CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        var userId = _user.Id ?? string.Empty;
+        string? userName = string.Empty;
+
+        if (!string.IsNullOrEmpty(userId))
+        {
+            userName = await _identityService.GetUserNameAsync(userId);
+        }
+
+        _logger.LogInformation("FHIRAI Request: {Name} {@UserId} {@UserName} {@Request}",
+            requestName, userId, userName, request);
+    }
+}
+```
+
+#### Performance Behaviour (Slow Request Detection)
+```csharp
+public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehaviour<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly Stopwatch _timer;
+    private readonly ILogger<TRequest> _logger;
+    private readonly IUser _user;
+    private readonly IIdentityService _identityService;
+
+    public PerformanceBehaviour(
+        ILogger<TRequest> logger,
+        IUser user,
+        IIdentityService identityService)
+    {
+        _timer = new Stopwatch();
+        _logger = logger;
+        _user = user;
+        _identityService = identityService;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        _timer.Start();
+
+        var response = await next();
+
+        _timer.Stop();
+
+        var elapsedMilliseconds = _timer.ElapsedMilliseconds;
+
+        if (elapsedMilliseconds > 500)
+        {
+            var requestName = typeof(TRequest).Name;
+            var userId = _user.Id ?? string.Empty;
+            var userName = string.Empty;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                userName = await _identityService.GetUserNameAsync(userId);
+            }
+
+            _logger.LogWarning("FHIRAI Long Running Request: {Name} ({ElapsedMilliseconds} milliseconds) {@UserId} {@UserName} {@Request}",
+                requestName, elapsedMilliseconds, userId, userName, request);
+        }
+
+        return response;
+    }
+}
+```
+
+#### Unhandled Exception Behaviour
+```csharp
+public class UnhandledExceptionBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly ILogger<TRequest> _logger;
+
+    public UnhandledExceptionBehaviour(ILogger<TRequest> logger)
     {
         _logger = logger;
     }
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Handling {RequestName} with {@Request}", 
-            typeof(TRequest).Name, request);
+        try
+        {
+            return await next();
+        }
+        catch (Exception ex)
+        {
+            var requestName = typeof(TRequest).Name;
 
-        var response = await next();
+            _logger.LogError(ex, "FHIRAI Request: Unhandled Exception for Request {Name} {@Request}", requestName, request);
 
-        _logger.LogInformation("Handled {RequestName} with {@Response}", 
-            typeof(TRequest).Name, response);
-
-        return response;
+            throw;
+        }
     }
 }
+```
+
+#### Handler-Level Logging Patterns
+
+##### Command Handler Logging
+```csharp
+public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemCommand, int>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly ILogger<CreateTodoItemCommandHandler> _logger;
+    private readonly ICurrentUserService _currentUserService;
+
+    public CreateTodoItemCommandHandler(
+        IApplicationDbContext context,
+        ILogger<CreateTodoItemCommandHandler> logger,
+        ICurrentUserService currentUserService)
+    {
+        _context = context;
+        _logger = logger;
+        _currentUserService = currentUserService;
+    }
+
+    public async Task<int> Handle(CreateTodoItemCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Creating TodoItem for List {ListId} by User {UserId}", 
+                request.ListId, _currentUserService.UserId);
+
+            var entity = new TodoItem
+            {
+                ListId = request.ListId,
+                Title = request.Title,
+                Priority = request.Priority,
+                Note = request.Note,
+                Done = false
+            };
+
+            entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
+            _context.TodoItems.Add(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Successfully created TodoItem {Id} for List {ListId}", 
+                entity.Id, request.ListId);
+            
+            return entity.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create TodoItem for List {ListId} by User {UserId}", 
+                request.ListId, _currentUserService.UserId);
+            throw;
+        }
+    }
+}
+```
+
+##### Query Handler Logging
+```csharp
+public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, TodoItemDetailDto?>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
+    private readonly ICurrentUserService _currentUserService;
+
+    public async Task<TodoItemDetailDto?> Handle(GetTodoItemByIdQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Getting TodoItem {Id} for User {UserId}", 
+                request.Id, _currentUserService.UserId);
+
+            var todoItem = await _context.TodoItems
+                .Include(x => x.List)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+
+            if (todoItem == null)
+            {
+                _logger.LogWarning("TodoItem {Id} not found for User {UserId}", 
+                    request.Id, _currentUserService.UserId);
+                return null;
+            }
+
+            var dto = _mapper.Map<TodoItemDetailDto>(todoItem);
+            
+            _logger.LogInformation("Successfully retrieved TodoItem {Id} for User {UserId}", 
+                request.Id, _currentUserService.UserId);
+            
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving TodoItem {Id} for User {UserId}", 
+                request.Id, _currentUserService.UserId);
+            throw;
+        }
+    }
+}
+```
+
+#### Domain Event Handler Logging
+```csharp
+public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemCompletedEvent>
+{
+    private readonly ILogger<TodoItemCompletedEventHandler> _logger;
+    private readonly ICurrentUserService _currentUserService;
+
+    public TodoItemCompletedEventHandler(
+        ILogger<TodoItemCompletedEventHandler> logger,
+        ICurrentUserService currentUserService)
+    {
+        _logger = logger;
+        _currentUserService = currentUserService;
+    }
+
+    public async Task Handle(TodoItemCompletedEvent notification, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("FHIRAI Domain: TodoItem {Id} was completed by User {UserId}", 
+            notification.Item.Id, _currentUserService.UserId);
+        
+        // Handle side effects here
+        // e.g., send notifications, update statistics, etc.
+        
+        await Task.CompletedTask;
+    }
+}
+```
+
+#### Logging Configuration
+```csharp
+// appsettings.json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "FHIRAI": "Information"
+    },
+    "Console": {
+      "FormatterName": "json",
+      "FormatterOptions": {
+        "IncludeScopes": true,
+        "TimestampFormat": "yyyy-MM-dd HH:mm:ss "
+      }
+    }
+  }
+}
+
+// Program.cs
+builder.Logging.AddJsonConsole(options =>
+{
+    options.JsonWriterOptions = new JsonWriterOptions
+    {
+        Indented = true
+    };
+});
+```
+
+#### Logging Best Practices
+
+##### Structured Logging Guidelines
+```csharp
+// ✅ Good: Structured logging with proper context
+_logger.LogInformation("User {UserId} created TodoItem {TodoItemId} in List {ListId}", 
+    userId, todoItemId, listId);
+
+// ❌ Bad: String concatenation
+_logger.LogInformation("User " + userId + " created TodoItem " + todoItemId);
+
+// ✅ Good: Exception logging with context
+_logger.LogError(ex, "Failed to create TodoItem {TodoItemId} for User {UserId}", 
+    todoItemId, userId);
+
+// ❌ Bad: Exception logging without context
+_logger.LogError(ex, "Failed to create TodoItem");
+```
+
+##### Log Levels Guidelines
+```csharp
+// Trace: Detailed diagnostic information
+_logger.LogTrace("Entering method {MethodName} with parameters {@Parameters}", methodName, parameters);
+
+// Debug: Diagnostic information for debugging
+_logger.LogDebug("Processing TodoItem {Id} with priority {Priority}", id, priority);
+
+// Information: General information about application flow
+_logger.LogInformation("User {UserId} created TodoItem {Id}", userId, id);
+
+// Warning: Unexpected situations that don't stop execution
+_logger.LogWarning("TodoItem {Id} has high priority but no due date", id);
+
+// Error: Error conditions that don't stop execution
+_logger.LogError(ex, "Failed to save TodoItem {Id}", id);
+
+// Critical: Critical errors that may cause application failure
+_logger.LogCritical(ex, "Database connection failed for TodoItem {Id}", id);
 ```
 
 ### 15. Enhanced Endpoint với Error Handling
@@ -981,24 +1398,66 @@ public class TodoItems : EndpointGroupBase
 
 ## 🔄 MediatR Configuration
 
-### Service Registration
+### Service Registration with Logging Behaviours
 ```csharp
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static void AddApplicationServices(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+        builder.Services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+
+        builder.Services.AddMediatR(cfg => {
+            cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+            
+            // Add behaviours in execution order
+            cfg.AddOpenRequestPreProcessor(typeof(LoggingBehaviour<>));           // 1. Log request
+            cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));         // 2. Catch exceptions
+            cfg.AddOpenBehavior(typeof(AuthorizationBehaviour<,>));              // 3. Check authorization
+            cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));                 // 4. Validate request
+            cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));                // 5. Monitor performance
+        });
+    }
+}
+```
+
+### Behaviour Execution Order
+```csharp
+// Execution order for MediatR pipeline:
+// 1. LoggingBehaviour (PreProcessor) - Log incoming request
+// 2. UnhandledExceptionBehaviour - Catch and log exceptions
+// 3. AuthorizationBehaviour - Check user permissions
+// 4. ValidationBehaviour - Validate request data
+// 5. Handler - Execute business logic
+// 6. PerformanceBehaviour - Monitor execution time
+// 7. LoggingBehaviour (PostProcessor) - Log response (if implemented)
+```
+
+### Behaviour Configuration Options
+```csharp
+// Custom configuration for behaviours
+public static class MediatRConfiguration
+{
+    public static void ConfigureMediatR(this IServiceCollection services)
     {
         services.AddMediatR(cfg => {
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             
-            // Add behaviors
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(PerformanceBehaviour<,>));
-            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
+            // Configure logging behaviour with custom settings
+            cfg.AddOpenRequestPreProcessor(typeof(LoggingBehaviour<>));
+            
+            // Configure performance monitoring with custom threshold
+            cfg.AddOpenBehavior(typeof(PerformanceBehaviour<,>));
+            
+            // Configure validation with custom error handling
+            cfg.AddOpenBehavior(typeof(ValidationBehaviour<,>));
+            
+            // Configure authorization with custom policies
+            cfg.AddOpenBehavior(typeof(AuthorizationBehaviour<,>));
+            
+            // Configure exception handling with custom logging
+            cfg.AddOpenBehavior(typeof(UnhandledExceptionBehaviour<,>));
         });
-
-        return services;
     }
 }
 ```
@@ -1134,17 +1593,21 @@ public record CreateTodoItemCommand : BaseRequest<int>
 ## 🚀 Advanced Patterns Summary
 
 ### ✅ Đã được cải thiện:
-1. **BaseEntity**: Hỗ trợ enterprise features (soft delete, versioning, tenant support)
-2. **GetById/GetDetail Pattern**: Pattern hoàn chỉnh cho việc lấy chi tiết entity
-3. **Error Handling**: Result pattern và custom exceptions
-4. **Caching**: Redis cache service với interface chuẩn
-5. **Authorization**: Authorization patterns trong handlers
-6. **Performance Monitoring**: Performance behaviour với structured logging
-7. **Structured Logging**: Enhanced logging patterns
+1. **BaseEntity Inheritance**: Hướng dẫn chi tiết về khi nào sử dụng BaseEntity vs BaseAuditableEntity
+2. **Entity Creation Checklist**: 7 bước tạo entity hoàn chỉnh với business logic
+3. **Entity Configuration**: Pattern cho EntityTypeConfiguration với indexes và relationships
+4. **GetById/GetDetail Pattern**: Pattern hoàn chỉnh cho việc lấy chi tiết entity
+5. **Error Handling**: Result pattern và custom exceptions
+6. **Caching**: Redis cache service với interface chuẩn
+7. **Authorization**: Authorization patterns trong handlers
+8. **Comprehensive Logging**: 5 loại logging patterns (Request, Performance, Exception, Handler, Domain Event)
+9. **MediatR Configuration**: Execution order và configuration options cho behaviours
+10. **Logging Best Practices**: Structured logging guidelines và log levels
 
 ### 🎯 Khi nào sử dụng:
 - **Patterns cơ bản**: Cho CRUD operations đơn giản
 - **Enhanced Patterns**: Cho enterprise applications với yêu cầu cao về security, performance, monitoring
+- **Logging Patterns**: Áp dụng cho tất cả handlers để có audit trail đầy đủ
 
 ---
 
