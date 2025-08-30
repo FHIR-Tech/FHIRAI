@@ -14,44 +14,47 @@ src/
 
 ## 🔍 Keyword Mapping to Documentation
 
-### Architecture & Patterns
-- **Clean Architecture** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Architecture Checklist
-- **CQRS** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Implementation Patterns
-- **SOLID** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Design Patterns Checklist
-- **Domain-Driven Design** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Layer Responsibilities
+### Architecture & Design
+- **Clean Architecture** → `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` → Core Architecture Principles
+- **CQRS** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Command Pattern & Query Pattern
+- **SOLID** → `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` → SOLID Principles
+- **Domain-Driven Design** → `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` → Domain-Driven Design
+- **Design Patterns** → `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` → Design Patterns
 
 ### Development Workflow
 - **New Feature** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Feature Implementation Checklist
 - **Code Generation** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Code Generation Commands
-- **Testing** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Testing Rules
+- **Testing** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Testing Patterns
 - **Code Review** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Code Review Checklist
 
 ### Security & Authentication
-- **Authentication** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
-- **Authorization** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Security Rules
-- **JWT** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
-- **Azure Key Vault** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Authentication** → `docs/cursor-agent/workflows/SECURITY_GUIDE.md` → Authentication System
+- **Authorization** → `docs/cursor-agent/workflows/SECURITY_GUIDE.md` → Authorization Rules
+- **JWT** → `docs/cursor-agent/workflows/SECURITY_GUIDE.md` → JWT Bearer Tokens
+- **Azure Key Vault** → `docs/cursor-agent/workflows/SECURITY_GUIDE.md` → Azure Key Vault Integration
+- **Security Best Practices** → `docs/cursor-agent/workflows/SECURITY_GUIDE.md` → Security Best Practices
 
 ### Database & Infrastructure
-- **Entity Framework** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Database Rules
-- **PostgreSQL** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → PostgreSQL Configuration
-- **Migrations** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Database Implementation
-- **Azure Bicep** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Deployment Rules
+- **Entity Framework** → `docs/cursor-agent/workflows/DATABASE_GUIDE.md` → Entity Framework Configuration
+- **PostgreSQL** → `docs/cursor-agent/workflows/DATABASE_GUIDE.md` → Database Design Principles
+- **Migrations** → `docs/cursor-agent/workflows/DATABASE_GUIDE.md` → Migration Management
+- **Database Performance** → `docs/cursor-agent/workflows/DATABASE_GUIDE.md` → Performance Optimization
+- **Database Security** → `docs/cursor-agent/workflows/DATABASE_GUIDE.md` → Database Security
 
 ### API Development
-- **Endpoints** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
-- **Minimal APIs** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Presentation Layer Implementation
-- **Swagger** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Code Quality Standards
-- **Validation** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Command Pattern
+- **Endpoints** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Endpoint Pattern
+- **Minimal APIs** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Endpoint Pattern
+- **Validation** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Command Pattern
+- **DTOs** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → DTO Pattern
 
 ### Code Quality
-- **Naming Conventions** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Naming Conventions
-- **Code Organization** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Code Quality Standards
-- **Performance** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Performance Guidelines
+- **Naming Conventions** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Naming Conventions
+- **Code Organization** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Code Organization
+- **Performance** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Performance Guidelines
 - **Error Handling** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Common Mistakes
 
 ### Documentation & Reporting
-- **Implementation Reports** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
+- **Implementation Reports** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Cursor AI Specific Rules
 - **API Documentation** → `docs/api/` → API specifications, guides, examples
 - **Architecture Docs** → `docs/architecture/` → ADRs, diagrams, decisions
 - **Session Logs** → `docs/cursor-agent/logs/` → Session tracking and audit trails
@@ -136,9 +139,13 @@ az login && azd up
 
 ## 📚 Reference Documents
 - **Navigation Guide**: `docs/cursor-agent/workflows/DOCUMENTATION_STRUCTURE.md` - AI navigation guide
-- **Development Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` - Comprehensive development guidelines
+- **Core Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` - Core development rules and guidelines
 - **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Guide**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation
+- **Architecture Guide**: `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` - Detailed architecture patterns
+- **Code Patterns**: `docs/cursor-agent/workflows/CODE_PATTERNS.md` - Implementation patterns and conventions
+- **Security Guide**: `docs/cursor-agent/workflows/SECURITY_GUIDE.md` - Security and authentication
+- **Database Guide**: `docs/cursor-agent/workflows/DATABASE_GUIDE.md` - Database design and EF Core
 - **API Documentation**: `docs/api/` - API specifications, guides, examples
 - **Cursor Agent Docs**: `docs/cursor-agent/` - Implementation reports, session logs
 
