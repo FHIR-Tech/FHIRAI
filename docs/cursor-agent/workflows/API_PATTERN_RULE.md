@@ -172,8 +172,7 @@ az login && azd up
 - **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
 
-### **For Legacy Reference:**
-- **API Pattern Index**: `API_PATTERN_INDEX.md` - Legacy detailed API pattern guide (DEPRECATED - use this optimized rule instead)
+
 
 ## 🎯 **WHEN TO REFERENCE OTHER FILES**
 
@@ -275,7 +274,7 @@ var routePrefix = instance.GroupName switch
 - **API Documentation**: `docs/api/`
 - **Implementation Reports**: `docs/cursor-agent/reports/`
 - **Sample Data**: `scripts/samples/`
-- **Cursor Agent Rules**: `docs/cursor-agent/workflows/`
+- **Cursor Agent Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md`
 
 ## 🏷️ **NAMING PATTERNS**
 - **Entities**: `{EntityName}.cs`

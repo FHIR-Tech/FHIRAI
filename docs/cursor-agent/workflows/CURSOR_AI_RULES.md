@@ -75,6 +75,11 @@ Always respond with the standardized format from optimized rule:
 - **Security Guide**: `SECURITY_GUIDE.md` - Security and compliance requirements
 - **Database Guide**: `DATABASE_GUIDE.md` - Database patterns and optimization
 
+### **For Development Workflow:**
+- **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
+- **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
+- **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+
 ## 🎯 **KEY PRINCIPLES**
 
 1. **Single Source of Truth**: Use `API_PATTERN_RULE.md` for all API decisions
@@ -85,10 +90,10 @@ Always respond with the standardized format from optimized rule:
 
 ## 🚨 **IMPORTANT RULES**
 
-2. **ALWAYS** start with the optimized rule for API development
-3. **ALWAYS** follow the standardized response format
-4. **ALWAYS** include validation checklists in responses
-5. **ONLY** reference other files when specific details are needed
+1. **ALWAYS** start with the optimized rule for API development
+2. **ALWAYS** follow the standardized response format
+3. **ALWAYS** include validation checklists in responses
+4. **ONLY** reference other files when specific details are needed
 
 ---
 
