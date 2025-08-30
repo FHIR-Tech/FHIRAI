@@ -37,14 +37,18 @@ src/
 
 ## 📚 Specialized Guides
 
+### API Development (CRITICAL)
+- **API_PATTERN_INDEX.md**: Auto-discovery guide for API pattern selection
+- **HEALTHCARE_DATA_PATTERN_REFERENCE.md**: FHIR compliance and healthcare data standards
+
 ### Architecture & Design
 - **ARCHITECTURE_GUIDE.md**: Detailed architecture patterns and design principles
 - **CODE_PATTERNS.md**: Implementation patterns and coding conventions
 - **DATABASE_GUIDE.md**: Database design and Entity Framework configuration
+- **FIELD_ORGANIZATION_PATTERN.md**: Entity field organization and structure patterns
 
 ### Security & Deployment
 - **SECURITY_GUIDE.md**: Authentication, authorization, and security best practices
-- **DEPLOYMENT_GUIDE.md**: Azure deployment and infrastructure management
 
 ### Development Workflow
 - **CURSOR_AI_QUICK_REFERENCE.md**: Quick reference for common patterns
