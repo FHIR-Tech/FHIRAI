@@ -1,139 +1,95 @@
-# FHIRAI - Cursor AI Development Rules & Guidelines
+# FHIRAI - Cursor AI Rules
 
-## 📋 Project Overview
+## 🎯 **OPTIMIZED API PATTERN RULE**
 
-FHIRAI là một ứng dụng web được xây dựng theo **Clean Architecture pattern** với ASP.NET Core, sử dụng CQRS pattern và được deploy trên Azure cloud infrastructure. Dự án được tạo từ template Clean.Architecture.Solution.Template version 9.0.12.
+**CRITICAL**: For all API development tasks, Cursor AI MUST use the optimized rule:
 
-## 🏗️ Core Development Rules
+### **Main Rule File**: `docs/cursor-agent/workflows/API_PATTERN_RULE.md`
 
-### ✅ Always Follow These Principles
-- **Clean Architecture**: 4-layer pattern (Domain → Application → Infrastructure → Web)
-- **CQRS**: Separate Commands (write) and Queries (read) using MediatR
-- **Dependency Inversion**: Domain layer never depends on Infrastructure
-- **SOLID Principles**: Apply all SOLID principles consistently
-- **Domain-Driven Design**: Entities, Value Objects, Domain Events
+This single rule contains:
+- ✅ **Auto-discovery algorithm** for pattern decision
+- ✅ **Implementation templates** for all patterns
+- ✅ **Validation checklists** for each pattern
+- ✅ **Quick commands** for development
+- ✅ **File locations** and naming patterns
+- ✅ **Conflict resolution** rules
 
-### ✅ Layer Responsibilities
-- **Domain Layer**: Pure business logic, no external dependencies
-- **Application Layer**: Orchestrates business operations, depends only on Domain
-- **Infrastructure Layer**: Implements external concerns, depends on Application
-- **Web Layer**: Handles HTTP concerns, depends on Application and Infrastructure
-
-### ✅ File Organization
+### **Decision Matrix (Quick Reference)**:
 ```
-src/
-├── Domain/           # Business entities, value objects, events
-├── Application/      # Commands, queries, handlers, DTOs
-├── Infrastructure/   # Database, external services, identity
-└── Web/             # API endpoints, configuration
+IF "patient" OR "fhir" OR "healthcare" OR "medical" OR "clinical"
+    → USE Minimal API Endpoints (FHIR compliance - MANDATORY)
+ELSE IF "user" OR "todo" OR "task" OR "admin" OR "system" OR "analytics"
+    → USE Controllers (Business logic - RECOMMENDED)
+ELSE IF "health" OR "webhook" OR "integration" OR "export" OR "import"
+    → USE Minimal API Endpoints (Special operations - FLEXIBLE)
+ELSE
+    → USE Controllers (Default)
 ```
 
-### ✅ Naming Conventions
-- **PascalCase**: Classes, methods, properties, namespaces
-- **camelCase**: Variables, parameters, local variables
-- **UPPER_CASE**: Constants, static readonly fields
-- **snake_case**: PostgreSQL database objects
-- **Descriptive Names**: Self-documenting code
+## 🚀 **WORKFLOW FOR API DEVELOPMENT**
 
-## 📚 Specialized Guides
+### **Step 1: Pattern Decision**
+1. Extract keywords from user request
+2. Apply decision matrix from optimized rule
+3. Determine pattern (Endpoints/Controllers)
 
-### API Development (CRITICAL)
-- **API_PATTERN_INDEX.md**: Auto-discovery guide for API pattern selection
-- **HEALTHCARE_DATA_PATTERN_REFERENCE.md**: FHIR compliance and healthcare data standards
+### **Step 2: Implementation**
+1. Use appropriate template from optimized rule
+2. Follow validation checklist for chosen pattern
+3. Implement with proper file structure
 
-### Architecture & Design
-- **ARCHITECTURE_GUIDE.md**: Detailed architecture patterns and design principles
-- **CODE_PATTERNS.md**: Implementation patterns and coding conventions
-- **DATABASE_GUIDE.md**: Database design and Entity Framework configuration
-- **FIELD_ORGANIZATION_PATTERN.md**: Entity field organization and structure patterns
+### **Step 3: Response Format**
+Always respond with the standardized format from optimized rule:
+```
+🎯 **Pattern Decision**: [Controller/Endpoint]
+📍 **File Location**: [Exact file path]
+🛣️ **Route Pattern**: [Route structure]
+📋 **Reason**: [Why this pattern was chosen]
+⚡ **Priority**: [MANDATORY/RECOMMENDED/FLEXIBLE/DEFAULT]
+🔍 **Keywords Detected**: [List of detected keywords]
 
-### Security & Deployment
-- **SECURITY_GUIDE.md**: Authentication, authorization, and security best practices
+📝 **Implementation**:
+[Code implementation here]
 
-### Development Workflow
-- **CURSOR_AI_QUICK_REFERENCE.md**: Quick reference for common patterns
-- **IMPLEMENTATION_CHECKLIST.md**: Step-by-step implementation guide
-- **DOCUMENTATION_STRUCTURE.md**: AI navigation guide
+🔧 **Validation Checklist**:
+- [ ] [Specific validation items]
 
-## 🚨 Forbidden Practices
+🔧 **Next Steps**:
+- [ ] Create file structure
+- [ ] Implement business logic
+- [ ] Add tests
+- [ ] Update documentation
+```
 
-### ❌ Never Do
-- Let Domain layer depend on EF Core or NHapi
-- Bypass Application layer for direct database access
-- Disable RLS or audit logging in production
-- Hardcode connection strings or secrets
-- Skip validation in handlers
-- Use synchronous I/O in async contexts
-- Log sensitive patient information
-- Disable HTTPS in production
-- Place documentation files in root directory (except README.md)
-- Mix sample data with source code
-- Use generic names for sample files
-- Create unstructured file hierarchies
+## 📚 **REFERENCE FILES (ONLY WHEN NEEDED)**
 
-### ✅ Always Do
-- Follow Clean Architecture principles
-- Implement proper error handling
-- Use dependency injection
-- Write comprehensive tests
-- Document public APIs
-- Use secure coding practices
-- Implement proper logging
-- Follow FHIR standards
-- Organize files in appropriate directories
-- Use descriptive naming conventions
-- Maintain clean project structure
-- Keep documentation up-to-date
+### **For FHIR Implementation:**
+- **Healthcare Data Patterns**: `HEALTHCARE_DATA_PATTERN_REFERENCE.md` - FHIR compliance requirements
 
-## 🎯 Cursor AI Specific Rules
+### **For Complex Features:**
+- **Code Patterns**: `CODE_PATTERNS.md` - Implementation patterns and best practices
+- **Field Organization**: `FIELD_ORGANIZATION_PATTERN.md` - Entity field organization standards
 
-### When Creating New Features
-1. **Start with Domain Layer**: Create entities, value objects, and domain events
-2. **Implement Application Layer**: Create commands, queries, and handlers
-3. **Configure Infrastructure**: Add database configurations and external services
-4. **Create Web Layer**: Implement API endpoints with proper authorization
-5. **Write Tests**: Create unit, integration, and functional tests
-6. **Update Documentation**: Generate implementation reports and update guides
+### **For Architecture:**
+- **Architecture Guide**: `ARCHITECTURE_GUIDE.md` - Clean architecture patterns
+- **Security Guide**: `SECURITY_GUIDE.md` - Security and compliance requirements
+- **Database Guide**: `DATABASE_GUIDE.md` - Database patterns and optimization
 
-### When Generating Code
-- Use established patterns from existing code
-- Follow naming conventions consistently
-- Implement proper validation and error handling
-- Add appropriate logging and monitoring
-- Ensure security best practices are followed
-- Create comprehensive tests
+## 🎯 **KEY PRINCIPLES**
 
-### When Creating Documentation
-- Use proper templates for reports
-- Include metadata (date, agent, session ID, status)
-- Follow exact naming conventions
-- Update documentation index immediately
-- Cross-reference related documents
-- Include technical details and metrics
+1. **Single Source of Truth**: Use `API_PATTERN_RULE.md` for all API decisions
+2. **Auto-Discovery**: Automatically detect patterns from user keywords
+3. **Standardized Response**: Always use the response format from optimized rule
+4. **Validation First**: Follow validation checklists for each pattern
+5. **Reference When Needed**: Only consult other files for specific requirements
 
-## 📊 Quality Standards
+## 🚨 **IMPORTANT RULES**
 
-### Code Quality
-- **Cyclomatic Complexity**: ≤ 10 per method
-- **Lines of Code**: ≤ 50 per method
-- **Class Coupling**: Minimize dependencies
-- **Depth of Inheritance**: ≤ 4 levels
-- **Maintainability Index**: ≥ 65
-
-### Testing Standards
-- **Unit Test Coverage**: ≥ 80%
-- **Integration Test Coverage**: ≥ 60%
-- **Functional Test Coverage**: ≥ 40%
-- **Performance Test**: Response time < 200ms
-- **Security Test**: All security requirements met
-
-### Documentation Standards
-- **Completeness**: All sections of templates must be filled
-- **Accuracy**: Technical details must be precise and verifiable
-- **Clarity**: Use clear, professional language
-- **Consistency**: Follow established patterns and conventions
-- **Traceability**: Link to related documents and code changes
+2. **ALWAYS** start with the optimized rule for API development
+3. **ALWAYS** follow the standardized response format
+4. **ALWAYS** include validation checklists in responses
+5. **ONLY** reference other files when specific details are needed
 
 ---
 
-**🎯 Remember**: Always follow Clean Architecture principles, use CQRS pattern, implement proper validation and authorization, and maintain high test coverage. **Document everything** and maintain comprehensive audit trails for all changes. When in doubt, refer to specialized guides for detailed information.
+**🎯 REMEMBER**: The optimized rule contains everything needed for quick decision-making and implementation. Use it as the single source of truth for all API development tasks!
