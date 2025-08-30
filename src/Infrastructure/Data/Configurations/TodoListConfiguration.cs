@@ -8,11 +8,34 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
 {
     public void Configure(EntityTypeBuilder<TodoList> builder)
     {
-        builder.Property(t => t.Title)
-            .HasMaxLength(200)
-            .IsRequired();
+        // Table configuration
+        builder.ToTable("TodoLists");
 
+        // Primary key
+        builder.HasKey(t => t.Id);
+
+        // Properties configuration
+        builder.Property(t => t.Title)
+            .HasMaxLength(200);
+
+        builder.Property(t => t.Colour)
+            .IsRequired()
+            .HasDefaultValue(Domain.ValueObjects.Colour.White);
+
+        // Value object configuration
         builder
             .OwnsOne(b => b.Colour);
+
+        // Audit properties (inherited from BaseAuditableEntity)
+        builder.Property(t => t.Created)
+            .IsRequired();
+
+        builder.Property(t => t.CreatedBy)
+            .HasMaxLength(100);
+
+        builder.Property(t => t.LastModified);
+
+        builder.Property(t => t.LastModifiedBy)
+            .HasMaxLength(100);
     }
 }
