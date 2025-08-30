@@ -46,6 +46,10 @@ src/
 - **Minimal APIs** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Endpoint Pattern
 - **Validation** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Command Pattern
 - **DTOs** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → DTO Pattern
+- **MediatR** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → MediatR I/O Patterns
+- **ISender** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Using ISender in Endpoints
+- **Paging** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Paging Patterns
+- **Search** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Paging Query Handlers
 
 ### Code Quality
 - **Naming Conventions** → `docs/cursor-agent/workflows/CODE_PATTERNS.md` → Naming Conventions
