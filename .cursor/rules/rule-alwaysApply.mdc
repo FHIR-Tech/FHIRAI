@@ -1,0 +1,189 @@
+---
+alwaysApply: true
+---
+
+
+# FHIRAI - Cursor AI Project Index
+
+## 🏗️ Project Overview
+**FHIRAI** - Clean Architecture ASP.NET Core app with CQRS, PostgreSQL, Azure deployment. Template: Clean.Architecture.Solution.Template v9.0.12.
+
+## 📁 Core Structure
+```
+src/
+├── Domain/           # Business entities, value objects, events
+├── Application/      # Commands, queries, handlers, DTOs  
+├── Infrastructure/   # Database, external services, identity
+└── Web/             # API endpoints, configuration
+```
+
+## 🎯 **MAIN RULES & WORKFLOW**
+
+### **Primary Rule**: `docs/cursor-agent/workflows/API_PATTERN_RULE.md`
+- **Purpose**: Single source of truth for all API development
+- **Contains**: Auto-discovery algorithm, templates, validation checklists
+- **Usage**: ALWAYS start here for API development
+
+### **Core Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md`
+- **Purpose**: Core development rules and guidelines
+- **Contains**: Workflow steps, response format, key principles
+- **Usage**: Reference for development workflow
+
+## 📚 **WORKFLOW FILES MAPPING**
+
+### **Specialized Guides:**
+- **Healthcare Data**: `docs/cursor-agent/workflows/HEALTHCARE_DATA_PATTERN_REFERENCE.md` - FHIR compliance
+- **Code Patterns**: `docs/cursor-agent/workflows/CODE_PATTERNS.md` - Implementation patterns
+- **Field Organization**: `docs/cursor-agent/workflows/FIELD_ORGANIZATION_PATTERN.md` - Entity structure
+
+### **Architecture & Design:**
+- **Architecture**: `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` - Clean architecture
+- **Security**: `docs/cursor-agent/workflows/SECURITY_GUIDE.md` - Security & compliance
+- **Database**: `docs/cursor-agent/workflows/DATABASE_GUIDE.md` - Database patterns
+
+### **Development Workflow:**
+- **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns
+- **Implementation**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` - Step-by-step guide
+- **Documentation**: `docs/cursor-agent/workflows/DOCUMENTATION_STRUCTURE.md` - AI navigation
+
+### **Legacy Reference:**
+- **API Pattern Index**: `docs/cursor-agent/workflows/API_PATTERN_INDEX.md` - (DEPRECATED)
+
+## 🚀 **QUICK DECISION MATRIX**
+```
+IF "patient" OR "fhir" OR "healthcare" OR "medical" OR "clinical"
+    → USE Minimal API Endpoints (FHIR compliance - MANDATORY)
+ELSE IF "user" OR "todo" OR "task" OR "admin" OR "system" OR "analytics"
+    → USE Controllers (Business logic - RECOMMENDED)
+ELSE IF "health" OR "webhook" OR "integration" OR "export" OR "import"
+    → USE Minimal API Endpoints (Special operations - FLEXIBLE)
+ELSE
+    → USE Controllers (Default)
+```
+
+## 🚀 **QUICK COMMANDS**
+```bash
+# Build & Run
+dotnet build -tl
+cd ./src/Web/ && dotnet watch run
+
+# Code Generation
+dotnet new ca-usecase --name Create[Entity] --feature-name [FeatureName] --usecase-type command --return-type int
+dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities]Vm
+
+# Testing
+dotnet test
+
+# Azure Deployment
+az login && azd up
+```
+
+## 📁 **KEY FILE LOCATIONS**
+- **Domain Entities**: `src/Domain/Entities/`
+- **Application Commands**: `src/Application/[FeatureName]/Commands/`
+- **Application Queries**: `src/Application/[FeatureName]/Queries/`
+- **API Endpoints**: `src/Web/Endpoints/`
+- **API Controllers**: `src/Web/Controllers/`
+- **Database Context**: `src/Infrastructure/Data/ApplicationDbContext.cs`
+
+---
+
+**🎯 REMEMBER**: 
+1. **Start with `API_PATTERN_RULE.md`** for all API development
+2. **Reference `CURSOR_AI_RULES.md`** for workflow details
+3. **Use specialized guides** when needed for specific requirements
+4. **Follow the decision matrix** for pattern selection
+
+
+# FHIRAI - Cursor AI Project Index
+
+## 🏗️ Project Overview
+**FHIRAI** - Clean Architecture ASP.NET Core app with CQRS, PostgreSQL, Azure deployment. Template: Clean.Architecture.Solution.Template v9.0.12.
+
+## 📁 Core Structure
+```
+src/
+├── Domain/           # Business entities, value objects, events
+├── Application/      # Commands, queries, handlers, DTOs  
+├── Infrastructure/   # Database, external services, identity
+└── Web/             # API endpoints, configuration
+```
+
+## 🎯 **MAIN RULES & WORKFLOW**
+
+### **Primary Rule**: `docs/cursor-agent/workflows/API_PATTERN_RULE.md`
+- **Purpose**: Single source of truth for all API development
+- **Contains**: Auto-discovery algorithm, templates, validation checklists
+- **Usage**: ALWAYS start here for API development
+
+### **Core Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md`
+- **Purpose**: Core development rules and guidelines
+- **Contains**: Workflow steps, response format, key principles
+- **Usage**: Reference for development workflow
+
+## 📚 **WORKFLOW FILES MAPPING**
+
+### **Specialized Guides:**
+- **Healthcare Data**: `docs/cursor-agent/workflows/HEALTHCARE_DATA_PATTERN_REFERENCE.md` - FHIR compliance
+- **Code Patterns**: `docs/cursor-agent/workflows/CODE_PATTERNS.md` - Implementation patterns
+- **Field Organization**: `docs/cursor-agent/workflows/FIELD_ORGANIZATION_PATTERN.md` - Entity structure
+
+### **Architecture & Design:**
+- **Architecture**: `docs/cursor-agent/workflows/ARCHITECTURE_GUIDE.md` - Clean architecture
+- **Security**: `docs/cursor-agent/workflows/SECURITY_GUIDE.md` - Security & compliance
+- **Database**: `docs/cursor-agent/workflows/DATABASE_GUIDE.md` - Database patterns
+
+### **Development Workflow:**
+- **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns
+- **Implementation**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` - Step-by-step guide
+- **Documentation**: `docs/cursor-agent/workflows/DOCUMENTATION_STRUCTURE.md` - AI navigation
+
+### **Legacy Reference:**
+- **API Pattern Index**: `docs/cursor-agent/workflows/API_PATTERN_INDEX.md` - (DEPRECATED)
+
+## 🚀 **QUICK DECISION MATRIX**
+```
+IF "patient" OR "fhir" OR "healthcare" OR "medical" OR "clinical"
+    → USE Minimal API Endpoints (FHIR compliance - MANDATORY)
+ELSE IF "user" OR "todo" OR "task" OR "admin" OR "system" OR "analytics"
+    → USE Controllers (Business logic - RECOMMENDED)
+ELSE IF "health" OR "webhook" OR "integration" OR "export" OR "import"
+    → USE Minimal API Endpoints (Special operations - FLEXIBLE)
+ELSE
+    → USE Controllers (Default)
+```
+
+## 🚀 **QUICK COMMANDS**
+```bash
+# Build & Run
+dotnet build -tl
+cd ./src/Web/ && dotnet watch run
+
+# Code Generation
+dotnet new ca-usecase --name Create[Entity] --feature-name [FeatureName] --usecase-type command --return-type int
+dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities]Vm
+
+# Testing
+dotnet test
+
+# Azure Deployment
+az login && azd up
+```
+
+## 📁 **KEY FILE LOCATIONS**
+- **Domain Entities**: `src/Domain/Entities/`
+- **Application Commands**: `src/Application/[FeatureName]/Commands/`
+- **Application Queries**: `src/Application/[FeatureName]/Queries/`
+- **API Endpoints**: `src/Web/Endpoints/`
+- **API Controllers**: `src/Web/Controllers/`
+- **Database Context**: `src/Infrastructure/Data/ApplicationDbContext.cs`
+
+---
+
+**🎯 REMEMBER**: 
+1. **Start with `API_PATTERN_RULE.md`** for all API development
+2. **Reference `CURSOR_AI_RULES.md`** for workflow details
+3. **Use specialized guides** when needed for specific requirements
+4. **Follow the decision matrix** for pattern selection
+
+
