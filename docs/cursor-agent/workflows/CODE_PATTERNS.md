@@ -556,6 +556,429 @@ public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemComple
 }
 ```
 
+## 🔧 Enhanced Implementation Patterns
+
+### 9. GetById/GetDetail Pattern
+
+#### Basic GetById Query
+```csharp
+// Query
+public record GetTodoItemByIdQuery : IRequest<TodoItemDetailDto?>
+{
+    public int Id { get; init; }
+}
+
+// Handler with Error Handling
+public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, TodoItemDetailDto?>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
+    private readonly ICurrentUserService _currentUserService;
+
+    public async Task<TodoItemDetailDto?> Handle(
+        GetTodoItemByIdQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Getting TodoItem with Id {Id} for user {UserId}", 
+                request.Id, _currentUserService.UserId);
+
+            var todoItem = await _context.TodoItems
+                .Include(x => x.List)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+
+            if (todoItem == null)
+            {
+                _logger.LogWarning("TodoItem with Id {Id} not found", request.Id);
+                return null;
+            }
+
+            // Authorization check
+            if (!await HasAccessToTodoItem(todoItem, cancellationToken))
+            {
+                _logger.LogWarning("User {UserId} does not have access to TodoItem {Id}", 
+                    _currentUserService.UserId, request.Id);
+                throw new ForbiddenAccessException();
+            }
+
+            var dto = _mapper.Map<TodoItemDetailDto>(todoItem);
+            
+            _logger.LogInformation("Successfully retrieved TodoItem {Id}", request.Id);
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving TodoItem with Id {Id}", request.Id);
+            throw;
+        }
+    }
+
+    private async Task<bool> HasAccessToTodoItem(TodoItem todoItem, CancellationToken cancellationToken)
+    {
+        var userId = _currentUserService.UserId;
+        var userRoles = _currentUserService.Roles;
+
+        if (userRoles.Contains("Admin")) return true;
+
+        // Check ownership
+        var todoList = await _context.TodoLists
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == todoItem.ListId, cancellationToken);
+
+        return todoList?.CreatedBy == userId;
+    }
+}
+
+// Validator
+public class GetTodoItemByIdQueryValidator : AbstractValidator<GetTodoItemByIdQuery>
+{
+    public GetTodoItemByIdQueryValidator()
+    {
+        RuleFor(v => v.Id)
+            .GreaterThan(0)
+            .WithMessage("Id must be greater than 0.");
+    }
+}
+```
+
+#### Enhanced GetById with Result Pattern
+```csharp
+// Enhanced Query with Result pattern
+public record GetTodoItemByIdQuery : IRequest<Result<TodoItemDetailDto>>
+{
+    public int Id { get; init; }
+}
+
+// Enhanced Handler with proper error handling
+public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, Result<TodoItemDetailDto>>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly ICacheService _cacheService;
+
+    public async Task<Result<TodoItemDetailDto>> Handle(
+        GetTodoItemByIdQuery request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Try to get from cache first
+            var cacheKey = $"TodoItem:{request.Id}:{_currentUserService.UserId}";
+            var cachedResult = await _cacheService.GetAsync<TodoItemDetailDto>(cacheKey, cancellationToken);
+            
+            if (cachedResult != null)
+            {
+                _logger.LogInformation("Retrieved TodoItem {Id} from cache", request.Id);
+                return Result<TodoItemDetailDto>.Success(cachedResult);
+            }
+
+            _logger.LogInformation("Getting TodoItem with Id {Id} for user {UserId}", 
+                request.Id, _currentUserService.UserId);
+
+            var todoItem = await _context.TodoItems
+                .Include(x => x.List)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+
+            if (todoItem == null)
+            {
+                _logger.LogWarning("TodoItem with Id {Id} not found", request.Id);
+                return Result<TodoItemDetailDto>.NotFound($"TodoItem with Id {request.Id} not found");
+            }
+
+            // Authorization check
+            if (!await HasAccessToTodoItem(todoItem, cancellationToken))
+            {
+                _logger.LogWarning("User {UserId} does not have access to TodoItem {Id}", 
+                    _currentUserService.UserId, request.Id);
+                return Result<TodoItemDetailDto>.Failure("Access denied", statusCode: 403);
+            }
+
+            var dto = _mapper.Map<TodoItemDetailDto>(todoItem);
+            
+            // Cache the result for 5 minutes
+            await _cacheService.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(5), cancellationToken);
+            
+            _logger.LogInformation("Successfully retrieved TodoItem {Id}", request.Id);
+            return Result<TodoItemDetailDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving TodoItem with Id {Id}", request.Id);
+            return Result<TodoItemDetailDto>.Failure("An error occurred while retrieving the TodoItem");
+        }
+    }
+}
+```
+
+### 10. Error Handling Patterns
+
+#### Result Pattern
+```csharp
+public record Result<T>
+{
+    public bool IsSuccess { get; init; }
+    public T? Value { get; init; }
+    public string? Message { get; init; }
+    public List<string> Errors { get; init; } = new();
+    public int StatusCode { get; init; } = 200;
+
+    public static Result<T> Success(T value, string? message = null) =>
+        new() { IsSuccess = true, Value = value, Message = message };
+
+    public static Result<T> Failure(string message, List<string>? errors = null, int statusCode = 400) =>
+        new() { IsSuccess = false, Message = message, Errors = errors ?? new List<string>(), StatusCode = statusCode };
+
+    public static Result<T> NotFound(string message = "Entity not found") =>
+        new() { IsSuccess = false, Message = message, StatusCode = 404 };
+}
+```
+
+#### Custom Exceptions
+```csharp
+public class NotFoundException : Exception
+{
+    public NotFoundException()
+        : base()
+    {
+    }
+
+    public NotFoundException(string message)
+        : base(message)
+    {
+    }
+
+    public NotFoundException(string name, object key)
+        : base($"Entity \"{name}\" ({key}) was not found.")
+    {
+    }
+}
+
+public class ForbiddenAccessException : Exception
+{
+    public ForbiddenAccessException() : base("Access denied") { }
+    public ForbiddenAccessException(string message) : base(message) { }
+}
+```
+
+### 11. Caching Patterns
+
+#### Cache Service Interface
+```csharp
+public interface ICacheService
+{
+    Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default);
+    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default);
+    Task RemoveAsync(string key, CancellationToken cancellationToken = default);
+    Task RemoveByPatternAsync(string pattern, CancellationToken cancellationToken = default);
+}
+```
+
+#### Redis Cache Implementation
+```csharp
+public class RedisCacheService : ICacheService
+{
+    private readonly IDistributedCache _cache;
+    private readonly ILogger<RedisCacheService> _logger;
+
+    public RedisCacheService(IDistributedCache cache, ILogger<RedisCacheService> logger)
+    {
+        _cache = cache;
+        _logger = logger;
+    }
+
+    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var value = await _cache.GetStringAsync(key, cancellationToken);
+            if (string.IsNullOrEmpty(value))
+                return default;
+
+            return JsonSerializer.Deserialize<T>(value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting cache value for key {Key}", key);
+            return default;
+        }
+    }
+
+    public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var options = new DistributedCacheEntryOptions();
+            if (expiration.HasValue)
+                options.SetAbsoluteExpiration(expiration.Value);
+
+            var serializedValue = JsonSerializer.Serialize(value);
+            await _cache.SetStringAsync(key, serializedValue, options, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting cache value for key {Key}", key);
+        }
+    }
+}
+```
+
+### 12. Authorization Patterns
+
+#### Authorization in Handlers
+```csharp
+private async Task<bool> HasAccessToTodoItem(TodoItem todoItem, CancellationToken cancellationToken)
+{
+    var userId = _currentUserService.UserId;
+    var userRoles = _currentUserService.Roles;
+
+    if (userRoles.Contains("Admin")) return true;
+
+    // Check ownership
+    var todoList = await _context.TodoLists
+        .AsNoTracking()
+        .FirstOrDefaultAsync(x => x.Id == todoItem.ListId, cancellationToken);
+
+    return todoList?.CreatedBy == userId;
+}
+```
+
+#### Authorization Attributes
+```csharp
+[Authorize(Policy = "TodoItemAccess")]
+public record GetTodoItemByIdQuery : IRequest<TodoItemDetailDto?>
+{
+    public int Id { get; init; }
+}
+```
+
+### 13. Performance Monitoring
+
+#### Performance Behaviour
+```csharp
+public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehaviour<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly Stopwatch _timer;
+    private readonly ILogger<TRequest> _logger;
+    private readonly IUser _user;
+    private readonly IIdentityService _identityService;
+
+    public PerformanceBehaviour(
+        ILogger<TRequest> logger,
+        IUser user,
+        IIdentityService identityService)
+    {
+        _timer = new Stopwatch();
+        _logger = logger;
+        _user = user;
+        _identityService = identityService;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        _timer.Start();
+
+        var response = await next();
+
+        _timer.Stop();
+
+        var elapsedMilliseconds = _timer.ElapsedMilliseconds;
+
+        if (elapsedMilliseconds > 500)
+        {
+            var requestName = typeof(TRequest).Name;
+            var userId = _user.Id ?? string.Empty;
+            var userName = string.Empty;
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                userName = await _identityService.GetUserNameAsync(userId);
+            }
+
+            _logger.LogWarning("FHIRAI Long Running Request: {Name} ({ElapsedMilliseconds} milliseconds) {@UserId} {@UserName} {@Request}",
+                requestName, elapsedMilliseconds, userId, userName, request);
+        }
+
+        return response;
+    }
+}
+```
+
+### 14. Structured Logging Pattern
+
+#### Logging Behaviour
+```csharp
+public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehaviour<TRequest, TResponse>
+    where TRequest : notnull
+{
+    private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> _logger;
+
+    public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Handling {RequestName} with {@Request}", 
+            typeof(TRequest).Name, request);
+
+        var response = await next();
+
+        _logger.LogInformation("Handled {RequestName} with {@Response}", 
+            typeof(TRequest).Name, response);
+
+        return response;
+    }
+}
+```
+
+### 15. Enhanced Endpoint với Error Handling
+
+```csharp
+public class TodoItems : EndpointGroupBase
+{
+    public override void Map(RouteGroupBuilder groupBuilder)
+    {
+        groupBuilder.MapGet(GetTodoItemById, "{id}").RequireAuthorization();
+        // ... other endpoints
+    }
+
+    // Basic version
+    public async Task<Results<Ok<TodoItemDetailDto>, NotFound>> GetTodoItemById(
+        ISender sender, int id)
+    {
+        var query = new GetTodoItemByIdQuery { Id = id };
+        var result = await sender.Send(query);
+        
+        return result != null 
+            ? TypedResults.Ok(result) 
+            : TypedResults.NotFound();
+    }
+
+    // Enhanced version with Result pattern
+    public async Task<Results<Ok<TodoItemDetailDto>, NotFound, BadRequest>> GetTodoItemByIdEnhanced(
+        ISender sender, int id)
+    {
+        var query = new GetTodoItemByIdQuery { Id = id };
+        var result = await sender.Send(query);
+        
+        return result.IsSuccess 
+            ? TypedResults.Ok(result.Value!) 
+            : result.StatusCode switch
+            {
+                404 => TypedResults.NotFound(),
+                403 => TypedResults.BadRequest(result.Message),
+                _ => TypedResults.BadRequest(result.Errors)
+            };
+    }
+}
+```
+
 ## 🔄 MediatR Configuration
 
 ### Service Registration
@@ -708,6 +1131,21 @@ public record CreateTodoItemCommand : BaseRequest<int>
 - **Monitoring**: Built-in properties for logging and monitoring
 - **Multi-tenancy**: Support for TenantId in enterprise applications
 
+## 🚀 Advanced Patterns Summary
+
+### ✅ Đã được cải thiện:
+1. **BaseEntity**: Hỗ trợ enterprise features (soft delete, versioning, tenant support)
+2. **GetById/GetDetail Pattern**: Pattern hoàn chỉnh cho việc lấy chi tiết entity
+3. **Error Handling**: Result pattern và custom exceptions
+4. **Caching**: Redis cache service với interface chuẩn
+5. **Authorization**: Authorization patterns trong handlers
+6. **Performance Monitoring**: Performance behaviour với structured logging
+7. **Structured Logging**: Enhanced logging patterns
+
+### 🎯 Khi nào sử dụng:
+- **Patterns cơ bản**: Cho CRUD operations đơn giản
+- **Enhanced Patterns**: Cho enterprise applications với yêu cầu cao về security, performance, monitoring
+
 ---
 
 **🎯 Remember**: 
@@ -717,3 +1155,7 @@ public record CreateTodoItemCommand : BaseRequest<int>
 4. **Follow Template**: Respect the existing Clean Architecture structure
 5. **Test Thoroughly**: Always include unit and integration tests
 6. **Document Changes**: Update documentation when adding new patterns
+7. **Monitor Performance**: Use performance behaviours for slow request detection
+8. **Implement Caching**: Use caching for frequently accessed data
+9. **Handle Errors Gracefully**: Use Result pattern for consistent error handling
+10. **Secure Your APIs**: Implement proper authorization and validation
