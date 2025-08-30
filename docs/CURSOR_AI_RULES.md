@@ -92,6 +92,66 @@ src/
     └── Program.cs               # Application entry point
 ```
 
+### ✅ Advanced Documentation Structure
+```
+docs/
+├── DOCUMENTATION_STRUCTURE.md   # AI Navigation Guide
+├── CURSOR_AI_RULES.md          # This file - Development rules
+├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
+├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+├── api/                         # API Documentation
+│   ├── README.md               # API overview and navigation
+│   ├── specifications/         # Technical specifications
+│   │   └── {resource-type}_specification.md
+│   ├── guides/                 # Usage guides and tutorials
+│   │   └── {feature}_guide.md
+│   ├── reports/                # API implementation reports
+│   │   └── {report-type}_{date}.md
+│   └── examples/               # Code examples and samples
+│       └── {use-case}_example.md
+├── architecture/               # Architecture documentation
+│   ├── decisions/             # Architecture Decision Records (ADRs)
+│   └── diagrams/              # System diagrams and flows
+├── cursor-agent/               # Cursor Agent Reports & Documentation
+│   ├── README.md              # Cursor Agent overview
+│   ├── reports/               # Implementation reports
+│   │   ├── template_implementation_report.md
+│   │   └── {feature}_{date}_report.md
+│   ├── logs/                  # Session logs and transcripts
+│   │   └── {session-type}_{date}_{time}.md
+│   ├── decisions/             # AI-generated architecture decisions
+│   │   └── ADR_{number}_{title}.md
+│   └── tasks/                 # Task tracking and milestones
+│       └── {task-type}_{date}_summary.md
+└── deployment/                 # Deployment documentation
+    ├── guides/                # Deployment guides
+    └── configurations/        # Environment configs
+```
+
+### ✅ Sample Data & Scripts Organization
+```
+scripts/
+├── samples/                    # Sample data organization
+│   ├── bundles/               # FHIR Bundle samples
+│   ├── resources/             # Individual resource samples
+│   └── test-data/             # Test data samples
+├── database/                  # Database scripts
+├── api/                       # API testing scripts
+└── deployment/                # Deployment scripts
+```
+
+### ✅ Advanced Naming Conventions
+```
+Documentation Files:
+- Specifications: {resource-type}_specification.md
+- Guides: {feature}_guide.md
+- Reports: {report-type}_{date}.md
+- Examples: {use-case}_example.md
+- Samples: {resource-type}_{purpose}_{date}.json
+- Logs: {session-type}_{date}_{time}.md
+- Decisions: ADR_{number}_{title}.md
+```
+
 ## 🔧 Design Patterns Checklist
 
 ### ✅ CQRS Pattern
@@ -224,6 +284,35 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 - [ ] **Domain Validation**: Business rule validation
 - [ ] **Error Handling**: Proper exception handling
 
+## 🤖 Cursor Agent Documentation Rules
+
+### ✅ When Creating Documentation
+- [ ] **Always use templates**: Use `docs/cursor-agent/reports/template_implementation_report.md` for implementation reports
+- [ ] **Include metadata**: Date, Agent name, Session ID, Status, Duration
+- [ ] **Follow naming conventions**: Use exact patterns specified in naming conventions
+- [ ] **Update index**: Always update `docs/DOCUMENTATION_STRUCTURE.md` when adding new documentation
+- [ ] **Cross-reference**: Link related documents and maintain traceability
+
+### ✅ When Generating Reports
+- [ ] **Use structured format**: Follow the template structure exactly
+- [ ] **Include technical details**: Architecture decisions, implementation approach, challenges
+- [ ] **Document code quality**: Patterns used, testing coverage, validation results
+- [ ] **Track metrics**: Performance impact, success metrics, issues found
+- [ ] **Provide next steps**: Immediate actions, future improvements, recommendations
+
+### ✅ When Logging Sessions
+- [ ] **Record session metadata**: Date, time, duration, agent version
+- [ ] **Document decisions**: Architecture decisions, technology choices, implementation strategies
+- [ ] **Track progress**: Task completion, milestone achievements, feature delivery
+- [ ] **Maintain audit trail**: All changes, reasons, and outcomes
+
+### ✅ Documentation Quality Standards
+- [ ] **Completeness**: All sections of templates must be filled
+- [ ] **Accuracy**: Technical details must be precise and verifiable
+- [ ] **Clarity**: Use clear, professional language
+- [ ] **Consistency**: Follow established patterns and conventions
+- [ ] **Traceability**: Link to related documents and code changes
+
 ## 🎯 Cursor AI Specific Rules
 
 ### ✅ When Creating New Features
@@ -233,18 +322,23 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 4. **Add Authorization**: Apply appropriate security
 5. **Write Tests**: Unit và integration tests
 6. **Update Documentation**: Keep documentation current
+7. **Create Implementation Report**: Document the implementation process
+8. **Update Session Logs**: Record decisions and progress
 
 ### ✅ When Modifying Existing Code
 1. **Maintain Patterns**: Follow existing patterns
 2. **Update Tests**: Ensure test coverage
 3. **Check Dependencies**: Verify layer dependencies
 4. **Validate Changes**: Test thoroughly
+5. **Update Documentation**: Reflect changes in documentation
+6. **Log Changes**: Record modifications in session logs
 
 ### ✅ When Adding New Dependencies
 1. **Check Necessity**: Only add if truly needed
 2. **Update Project Files**: Add to appropriate .csproj
 3. **Configure DI**: Update DependencyInjection.cs
 4. **Document Usage**: Update documentation
+5. **Create ADR**: Document architecture decision if significant
 
 ### ✅ When Creating New Entities
 1. **Inherit Base Classes**: Use BaseEntity hoặc BaseAuditableEntity
@@ -252,12 +346,16 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 3. **Configure EF Core**: Add entity configuration
 4. **Create DTOs**: For data transfer
 5. **Add Validation**: Business rule validation
+6. **Create Samples**: Add sample data in `/scripts/samples/`
+7. **Update API Docs**: Add to API specifications
 
 ### ✅ When Creating New Endpoints
 1. **Use Minimal APIs**: Follow existing endpoint patterns
 2. **Add Authorization**: Apply appropriate security
 3. **Handle Errors**: Proper error responses
 4. **Document API**: Update OpenAPI documentation
+5. **Create Examples**: Add usage examples in `/docs/api/examples/`
+6. **Update Guides**: Add to feature guides if needed
 
 ## 🚨 Common Pitfalls to Avoid
 
@@ -280,6 +378,20 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 - [ ] **Blocking Calls**: Use async/await consistently
 - [ ] **Inefficient Queries**: Optimize database queries
 
+### ❌ Documentation Violations
+- [ ] **Create documentation without using proper templates**
+- [ ] **Skip metadata in reports** (date, agent, status)
+- [ ] **Use inconsistent naming conventions**
+- [ ] **Fail to update documentation index**
+- [ ] **Place API docs outside `/docs/api/` structure**
+- [ ] **Place Cursor Agent reports outside `/docs/cursor-agent/` structure**
+- [ ] **Create documentation without cross-references**
+- [ ] **Skip technical details in implementation reports**
+- [ ] **Place documentation files in root directory** (except README.md)
+- [ ] **Mix sample data with source code**
+- [ ] **Use generic names for sample files**
+- [ ] **Create unstructured file hierarchies**
+
 ## 📊 Quality Metrics
 
 ### ✅ Code Quality
@@ -299,6 +411,13 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 - [ ] **Authorization**: Role và policy-based access
 - [ ] **Data Protection**: Encrypt sensitive data
 - [ ] **Audit Trail**: Log security events
+
+### ✅ Documentation Quality
+- [ ] **Completeness**: All required sections filled
+- [ ] **Accuracy**: Technical details precise and verifiable
+- [ ] **Clarity**: Clear, professional language
+- [ ] **Consistency**: Follow established patterns
+- [ ] **Traceability**: Link to related documents
 
 ## 🔧 Tools & Extensions
 
@@ -326,4 +445,4 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 
 ---
 
-**Remember**: Always follow the established patterns và maintain consistency across the codebase. When in doubt, refer to existing implementations trong the project.
+**Remember**: Always follow the established patterns và maintain consistency across the codebase. When in doubt, refer to existing implementations trong the project. **Document everything** and maintain comprehensive audit trails for all changes.

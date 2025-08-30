@@ -29,6 +29,45 @@ src/
 └── Web/Endpoints/                # API endpoints
 ```
 
+### Advanced Documentation Structure
+```
+docs/
+├── DOCUMENTATION_STRUCTURE.md   # This file - AI Navigation Guide
+├── CURSOR_AI_RULES.md          # Comprehensive development rules
+├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
+├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+├── api/                         # API Documentation
+│   ├── README.md               # API overview and navigation
+│   ├── specifications/         # Technical specifications
+│   ├── guides/                 # Usage guides and tutorials
+│   ├── reports/                # API implementation reports
+│   └── examples/               # Code examples and samples
+├── architecture/               # Architecture documentation
+│   ├── decisions/             # Architecture Decision Records (ADRs)
+│   └── diagrams/              # System diagrams and flows
+├── cursor-agent/               # Cursor Agent Reports & Documentation
+│   ├── README.md              # Cursor Agent overview
+│   ├── reports/               # Implementation reports
+│   ├── logs/                  # Session logs and transcripts
+│   ├── decisions/             # AI-generated architecture decisions
+│   └── tasks/                 # Task tracking and milestones
+└── deployment/                 # Deployment documentation
+    ├── guides/                # Deployment guides
+    └── configurations/        # Environment configs
+```
+
+### Sample Data & Scripts Organization
+```
+scripts/
+├── samples/                    # Sample data organization
+│   ├── bundles/               # FHIR Bundle samples
+│   ├── resources/             # Individual resource samples
+│   └── test-data/             # Test data samples
+├── database/                  # Database scripts
+├── api/                       # API testing scripts
+└── deployment/                # Deployment scripts
+```
+
 ## 🔍 AI Task Navigation
 
 ### When Creating New Features
@@ -40,6 +79,7 @@ src/
 - **Domain Events**: `src/Domain/Events/`
 - **Pattern**: Inherit from `BaseEntity` or `BaseAuditableEntity`
 - **Example**: See `src/Domain/Entities/TodoItem.cs`
+- **Samples**: Create sample data in `scripts/samples/resources/`
 
 #### 2. Application Layer
 - **Commands**: `src/Application/[FeatureName]/Commands/`
@@ -56,6 +96,12 @@ src/
 - **Endpoints**: `src/Web/Endpoints/`
 - **Pattern**: Extend `EndpointGroupBase`
 - **Example**: See `src/Web/Endpoints/TodoItems.cs`
+
+#### 5. Documentation & Reports
+- **API Specs**: `docs/api/specifications/{resource-type}_specification.md`
+- **Implementation Report**: `docs/cursor-agent/reports/{feature}_{date}_report.md`
+- **Session Log**: `docs/cursor-agent/logs/{session-type}_{date}_{time}.md`
+- **ADR**: `docs/cursor-agent/decisions/ADR_{number}_{title}.md`
 
 ### When Implementing Security
 **Primary Reference**: `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
@@ -80,6 +126,17 @@ src/
 - **Pattern**: Extend `EndpointGroupBase`, use `ISender`
 - **Authorization**: Add `.RequireAuthorization()`
 - **Example**: See `src/Web/Endpoints/TodoItems.cs`
+- **API Docs**: Update `docs/api/specifications/`
+- **Examples**: Add to `docs/api/examples/`
+
+### When Creating Documentation
+**Primary Reference**: `docs/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
+
+- **Use Templates**: Always use proper templates for reports
+- **Include Metadata**: Date, Agent name, Session ID, Status, Duration
+- **Follow Naming**: Use exact naming conventions
+- **Update Index**: Always update this navigation guide
+- **Cross-reference**: Link related documents
 
 ## 🏷️ Naming Conventions
 
@@ -102,6 +159,17 @@ Event Handlers:     {EventName}EventHandler.cs
 Exceptions:         {ExceptionName}Exception.cs
 Value Objects:      {ValueObjectName}.cs
 Tests:              {TestName}Tests.cs
+```
+
+### Documentation Naming (Advanced Patterns)
+```
+Specifications:     {resource-type}_specification.md
+Guides:            {feature}_guide.md
+Reports:           {report-type}_{date}.md
+Examples:          {use-case}_example.md
+Samples:           {resource-type}_{purpose}_{date}.json
+Logs:              {session-type}_{date}_{time}.md
+Decisions:         ADR_{number}_{title}.md
 ```
 
 ### Directory Structure
@@ -167,6 +235,7 @@ azd deploy
   - Design patterns (CQRS, Repository, Factory)
   - Security, Database, Testing rules
   - Code quality standards
+  - **Cursor Agent Documentation Rules**
 
 ### For Quick Reference
 - **Quick Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md`
@@ -175,6 +244,14 @@ azd deploy
   - Security patterns and validation
   - Common mistakes to avoid
 
+### For Documentation Creation
+- **API Documentation**: `docs/api/`
+  - Specifications, guides, examples, reports
+- **Architecture Docs**: `docs/architecture/`
+  - ADRs, diagrams, design decisions
+- **Cursor Agent Docs**: `docs/cursor-agent/`
+  - Implementation reports, session logs, decisions
+
 ## 🎯 Common Development Scenarios
 
 ### Scenario 1: Create New Entity with Full CRUD
@@ -182,25 +259,40 @@ azd deploy
 2. **Application**: Generate commands/queries using template
 3. **Infrastructure**: Add to DbContext and create configuration
 4. **Web**: Create endpoints in `src/Web/Endpoints/`
-5. **Reference**: Follow `TodoItems` feature pattern
+5. **Samples**: Add sample data in `scripts/samples/resources/`
+6. **Documentation**: Create API spec in `docs/api/specifications/`
+7. **Report**: Generate implementation report in `docs/cursor-agent/reports/`
+8. **Reference**: Follow `TodoItems` feature pattern
 
 ### Scenario 2: Add Authentication to Feature
 1. **Commands/Queries**: Add `[Authorize]` attributes
 2. **Endpoints**: Add `.RequireAuthorization()`
 3. **Policies**: Define in `src/Domain/Constants/Policies.cs`
-4. **Reference**: See existing authorized endpoints
+4. **Documentation**: Update security documentation
+5. **Reference**: See existing authorized endpoints
 
 ### Scenario 3: Database Schema Changes
 1. **Domain**: Update entity properties
 2. **Infrastructure**: Create/update entity configuration
 3. **Migration**: Generate and apply migration
-4. **Reference**: See existing entity configurations
+4. **Samples**: Update sample data if needed
+5. **Reference**: See existing entity configurations
 
 ### Scenario 4: Add New API Endpoint
 1. **Application**: Create query/command if needed
 2. **Web**: Add endpoint method to existing endpoint class
 3. **Mapping**: Add to `Map()` method with authorization
-4. **Reference**: See `src/Web/Endpoints/TodoItems.cs`
+4. **API Docs**: Update `docs/api/specifications/`
+5. **Examples**: Add to `docs/api/examples/`
+6. **Reference**: See `src/Web/Endpoints/TodoItems.cs`
+
+### Scenario 5: Create Implementation Report
+1. **Use Template**: `docs/cursor-agent/reports/template_implementation_report.md`
+2. **Include Metadata**: Date, agent, session ID, status, duration
+3. **Technical Details**: Architecture decisions, implementation approach
+4. **Quality Metrics**: Patterns used, testing coverage, validation
+5. **Next Steps**: Immediate actions, future improvements
+6. **Cross-reference**: Link to related documents and code
 
 ## 🚨 Common Issues & Solutions
 
@@ -219,6 +311,13 @@ azd deploy
 - **Architecture**: Ensure layer separation
 - **Dependencies**: Domain should not depend on Infrastructure
 
+### Documentation Issues
+- **Template Usage**: Always use proper templates for reports
+- **Metadata**: Include all required metadata in reports
+- **Naming**: Follow exact naming conventions
+- **Structure**: Place files in correct directory structure
+- **Cross-references**: Link related documents
+
 ## 📋 Quality Checklist
 
 ### Before Committing
@@ -228,6 +327,9 @@ azd deploy
 - [ ] Has meaningful tests
 - [ ] No circular dependencies
 - [ ] Follows Clean Architecture principles
+- [ ] Documentation updated
+- [ ] Implementation report created
+- [ ] Session log updated
 
 ### Code Review Points
 - [ ] Layer responsibilities respected
@@ -235,7 +337,18 @@ azd deploy
 - [ ] Security implemented
 - [ ] Error handling in place
 - [ ] Performance considered
+- [ ] Documentation complete
+- [ ] Samples created
+- [ ] API docs updated
+
+### Documentation Quality
+- [ ] Uses proper templates
+- [ ] Includes complete metadata
+- [ ] Follows naming conventions
+- [ ] Cross-references maintained
+- [ ] Technical details accurate
+- [ ] Professional language used
 
 ---
 
-**🎯 AI Instructions**: Use this guide to quickly locate relevant information and follow established patterns. Always reference the specific documentation files for detailed implementation guidance. When in doubt, follow the `TodoItems` feature as the reference pattern.
+**🎯 AI Instructions**: Use this guide to quickly locate relevant information and follow established patterns. Always reference the specific documentation files for detailed implementation guidance. When in doubt, follow the `TodoItems` feature as the reference pattern. **Document everything** and maintain comprehensive audit trails for all changes.
