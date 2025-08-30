@@ -33,9 +33,20 @@ src/
 ```
 docs/
 ├── DOCUMENTATION_STRUCTURE.md   # This file - AI Navigation Guide
-├── CURSOR_AI_RULES.md          # Comprehensive development rules
-├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
-├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+├── cursor-agent/                 # Cursor Agent Documentation
+│   ├── README.md                # Cursor Agent overview
+│   ├── workflows/               # AI workflow rules and guidelines
+│   │   ├── CURSOR_AI_RULES.md  # Comprehensive development rules
+│   │   ├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
+│   │   └── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+│   ├── reports/                 # Implementation reports
+│   │   └── template_implementation_report.md # Report template
+│   ├── logs/                    # Session logs and transcripts
+│   │   └── {session-type}_{date}_{time}.md
+│   ├── decisions/               # AI-generated architecture decisions
+│   │   └── ADR_{number}_{title}.md
+│   └── tasks/                   # Task tracking and milestones
+│       └── {task-type}_{date}_summary.md
 ├── api/                         # API Documentation
 │   ├── README.md               # API overview and navigation
 │   ├── specifications/         # Technical specifications
@@ -45,12 +56,6 @@ docs/
 ├── architecture/               # Architecture documentation
 │   ├── decisions/             # Architecture Decision Records (ADRs)
 │   └── diagrams/              # System diagrams and flows
-├── cursor-agent/               # Cursor Agent Reports & Documentation
-│   ├── README.md              # Cursor Agent overview
-│   ├── reports/               # Implementation reports
-│   ├── logs/                  # Session logs and transcripts
-│   ├── decisions/             # AI-generated architecture decisions
-│   └── tasks/                 # Task tracking and milestones
 └── deployment/                 # Deployment documentation
     ├── guides/                # Deployment guides
     └── configurations/        # Environment configs
@@ -71,7 +76,7 @@ scripts/
 ## 🔍 AI Task Navigation
 
 ### When Creating New Features
-**Primary Reference**: `docs/IMPLEMENTATION_CHECKLIST.md`
+**Primary Reference**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md`
 
 #### 1. New Entity Creation
 - **Domain Entity**: `src/Domain/Entities/`
@@ -104,7 +109,7 @@ scripts/
 - **ADR**: `docs/cursor-agent/decisions/ADR_{number}_{title}.md`
 
 ### When Implementing Security
-**Primary Reference**: `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
+**Primary Reference**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
 
 - **Authorization**: Add `[Authorize]` attributes to commands/queries
 - **Endpoints**: Add `.RequireAuthorization()` to endpoint mappings
@@ -112,7 +117,7 @@ scripts/
 - **Pattern**: See `src/Application/Common/Security/AuthorizeAttribute.cs`
 
 ### When Working with Database
-**Primary Reference**: `docs/CURSOR_AI_RULES.md` → Database Rules
+**Primary Reference**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Database Rules
 
 - **Migrations**: `dotnet ef migrations add [MigrationName]`
 - **Entity Config**: Create in `src/Infrastructure/Data/Configurations/`
@@ -120,7 +125,7 @@ scripts/
 - **Pattern**: See `src/Infrastructure/Data/Configurations/TodoItemConfiguration.cs`
 
 ### When Creating API Endpoints
-**Primary Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
+**Primary Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
 
 - **Location**: `src/Web/Endpoints/`
 - **Pattern**: Extend `EndpointGroupBase`, use `ISender`
@@ -130,7 +135,7 @@ scripts/
 - **Examples**: Add to `docs/api/examples/`
 
 ### When Creating Documentation
-**Primary Reference**: `docs/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
+**Primary Reference**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
 
 - **Use Templates**: Always use proper templates for reports
 - **Include Metadata**: Date, Agent name, Session ID, Status, Duration
@@ -224,13 +229,13 @@ azd deploy
 ## 📚 Documentation References
 
 ### For Development Tasks
-- **Implementation Guide**: `docs/IMPLEMENTATION_CHECKLIST.md`
+- **Implementation Guide**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md`
   - Complete step-by-step process for new features
   - Domain, Application, Infrastructure, Web layer implementation
   - Testing, Security, Database implementation
 
 ### For Rules & Patterns
-- **Development Rules**: `docs/CURSOR_AI_RULES.md`
+- **Development Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md`
   - Architecture principles and layer responsibilities
   - Design patterns (CQRS, Repository, Factory)
   - Security, Database, Testing rules
@@ -238,7 +243,7 @@ azd deploy
   - **Cursor Agent Documentation Rules**
 
 ### For Quick Reference
-- **Quick Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md`
+- **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md`
   - Common patterns and code examples
   - Command/Query/Endpoint templates
   - Security patterns and validation

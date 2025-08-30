@@ -15,43 +15,43 @@ src/
 ## 🔍 Keyword Mapping to Documentation
 
 ### Architecture & Patterns
-- **Clean Architecture** → `docs/CURSOR_AI_RULES.md` → Architecture Checklist
-- **CQRS** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Implementation Patterns
-- **SOLID** → `docs/CURSOR_AI_RULES.md` → Design Patterns Checklist
-- **Domain-Driven Design** → `docs/CURSOR_AI_RULES.md` → Layer Responsibilities
+- **Clean Architecture** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Architecture Checklist
+- **CQRS** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Implementation Patterns
+- **SOLID** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Design Patterns Checklist
+- **Domain-Driven Design** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Layer Responsibilities
 
 ### Development Workflow
-- **New Feature** → `docs/IMPLEMENTATION_CHECKLIST.md` → Feature Implementation Checklist
-- **Code Generation** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Code Generation Commands
-- **Testing** → `docs/CURSOR_AI_RULES.md` → Testing Rules
-- **Code Review** → `docs/IMPLEMENTATION_CHECKLIST.md` → Code Review Checklist
+- **New Feature** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Feature Implementation Checklist
+- **Code Generation** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Code Generation Commands
+- **Testing** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Testing Rules
+- **Code Review** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Code Review Checklist
 
 ### Security & Authentication
-- **Authentication** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
-- **Authorization** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Security Rules
-- **JWT** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
-- **Azure Key Vault** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Authentication** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Authorization** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Security Rules
+- **JWT** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Azure Key Vault** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Security & Authentication Rules
 
 ### Database & Infrastructure
-- **Entity Framework** → `docs/CURSOR_AI_RULES.md` → Database Rules
-- **PostgreSQL** → `docs/CURSOR_AI_RULES.md` → PostgreSQL Configuration
-- **Migrations** → `docs/IMPLEMENTATION_CHECKLIST.md` → Database Implementation
-- **Azure Bicep** → `docs/CURSOR_AI_RULES.md` → Deployment Rules
+- **Entity Framework** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Database Rules
+- **PostgreSQL** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → PostgreSQL Configuration
+- **Migrations** → `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` → Database Implementation
+- **Azure Bicep** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Deployment Rules
 
 ### API Development
-- **Endpoints** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
-- **Minimal APIs** → `docs/CURSOR_AI_RULES.md` → Presentation Layer Implementation
-- **Swagger** → `docs/CURSOR_AI_RULES.md` → Code Quality Standards
-- **Validation** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Command Pattern
+- **Endpoints** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
+- **Minimal APIs** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Presentation Layer Implementation
+- **Swagger** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Code Quality Standards
+- **Validation** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Command Pattern
 
 ### Code Quality
-- **Naming Conventions** → `docs/CURSOR_AI_RULES.md` → Naming Conventions
-- **Code Organization** → `docs/CURSOR_AI_RULES.md` → Code Quality Standards
-- **Performance** → `docs/CURSOR_AI_RULES.md` → Performance Guidelines
-- **Error Handling** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Common Mistakes
+- **Naming Conventions** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Naming Conventions
+- **Code Organization** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Code Quality Standards
+- **Performance** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Performance Guidelines
+- **Error Handling** → `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` → Common Mistakes
 
 ### Documentation & Reporting
-- **Implementation Reports** → `docs/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
+- **Implementation Reports** → `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` → Cursor Agent Documentation Rules
 - **API Documentation** → `docs/api/` → API specifications, guides, examples
 - **Architecture Docs** → `docs/architecture/` → ADRs, diagrams, decisions
 - **Session Logs** → `docs/cursor-agent/logs/` → Session tracking and audit trails
@@ -83,6 +83,7 @@ az login && azd up
 - **API Documentation**: `docs/api/`
 - **Implementation Reports**: `docs/cursor-agent/reports/`
 - **Sample Data**: `scripts/samples/`
+- **Cursor Agent Rules**: `docs/cursor-agent/workflows/`
 
 ## 🏷️ Naming Patterns
 - **Entities**: `{EntityName}.cs`
@@ -135,9 +136,9 @@ az login && azd up
 
 ## 📚 Reference Documents
 - **Navigation Guide**: `docs/DOCUMENTATION_STRUCTURE.md` - AI navigation guide
-- **Development Rules**: `docs/CURSOR_AI_RULES.md` - Comprehensive development guidelines
-- **Quick Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
-- **Implementation Guide**: `docs/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation
+- **Development Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` - Comprehensive development guidelines
+- **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
+- **Implementation Guide**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation
 - **API Documentation**: `docs/api/` - API specifications, guides, examples
 - **Cursor Agent Docs**: `docs/cursor-agent/` - Implementation reports, session logs
 
