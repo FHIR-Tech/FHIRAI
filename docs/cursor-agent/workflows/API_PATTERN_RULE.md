@@ -1,5 +1,17 @@
 # API Pattern Rules - Complete Guide
 
+## 📋 **TABLE OF CONTENTS**
+- [🎯 Cursor AI Auto-Discovery & Implementation Guide](#-cursor-ai-auto-discovery--implementation-guide)
+- [📁 File Locations & Routes](#-file-locations--routes)
+- [✅ Validation Checklists](#-validation-checklists)
+- [🚀 Quick Commands](#-quick-commands)
+- [📚 Reference Files](#-reference-files)
+- [🎯 When to Reference Other Files](#-when-to-reference-other-files)
+- [🎯 Implementation Workflow](#-implementation-workflow)
+- [🚨 Conflict Resolution](#-conflict-resolution)
+- [📁 Key File Locations](#-key-file-locations)
+- [🏷️ Naming Patterns](#️-naming-patterns)
+
 ## 🎯 **CURSOR AI AUTO-DISCOVERY & IMPLEMENTATION GUIDE**
 
 **CRITICAL**: When implementing any API feature, Cursor AI MUST follow this optimized workflow:
@@ -26,11 +38,54 @@ public class FhirEndpoints : EndpointGroupBase
     
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapGet(GetResource, "{resourceType}").RequireAuthorization();
-        groupBuilder.MapGet(GetResourceById, "{resourceType}/{id}").RequireAuthorization();
-        groupBuilder.MapPost(CreateResource, "{resourceType}").RequireAuthorization();
-        groupBuilder.MapPut(UpdateResource, "{resourceType}/{id}").RequireAuthorization();
-        groupBuilder.MapDelete(DeleteResource, "{resourceType}/{id}").RequireAuthorization();
+        groupBuilder.MapGet(GetResource, "{resourceType}")
+            .RequireAuthorization()
+            .WithName("GetFhirResource")
+            .WithSummary("Get FHIR resources by type");
+            
+        groupBuilder.MapGet(GetResourceById, "{resourceType}/{id}")
+            .RequireAuthorization()
+            .WithName("GetFhirResourceById")
+            .WithSummary("Get specific FHIR resource");
+            
+        groupBuilder.MapPost(CreateResource, "{resourceType}")
+            .RequireAuthorization()
+            .WithName("CreateFhirResource")
+            .WithSummary("Create new FHIR resource");
+            
+        groupBuilder.MapPut(UpdateResource, "{resourceType}/{id}")
+            .RequireAuthorization()
+            .WithName("UpdateFhirResource")
+            .WithSummary("Update existing FHIR resource");
+            
+        groupBuilder.MapDelete(DeleteResource, "{resourceType}/{id}")
+            .RequireAuthorization()
+            .WithName("DeleteFhirResource")
+            .WithSummary("Delete FHIR resource");
+    }
+    
+    public async Task<Results<Ok<Bundle>, NotFound, BadRequest<OperationOutcome>>> GetResource(
+        ISender sender, 
+        string resourceType, 
+        [AsParameters] GetFhirResourceQuery query)
+    {
+        try
+        {
+            var result = await sender.Send(query);
+            return TypedResults.Ok(result);
+        }
+        catch (NotFoundException)
+        {
+            return TypedResults.NotFound();
+        }
+        catch (ValidationException ex)
+        {
+            var operationOutcome = new OperationOutcome
+            {
+                Issue = new[] { new OperationOutcomeIssue { Severity = "error", Code = "invalid", Diagnostics = ex.Message } }
+            };
+            return TypedResults.BadRequest(operationOutcome);
+        }
     }
 }
 ```
@@ -41,6 +96,8 @@ public class FhirEndpoints : EndpointGroupBase
 [Route("api/[controller]")]
 [Authorize]
 [Produces("application/json")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status403Forbidden)]
 public class EntityController : ControllerBase
 {
     private readonly ISender _sender;
@@ -53,11 +110,41 @@ public class EntityController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<EntityDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<EntityDto>>> GetEntities([FromQuery] GetEntitiesQuery query)
+    [ProducesResponseType(typeof(PaginatedList<EntityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PaginatedList<EntityDto>>> GetEntities([FromQuery] GetEntitiesQuery query)
     {
-        var result = await _sender.Send(query);
-        return Ok(result);
+        try
+        {
+            _logger.LogInformation("Getting entities with query: {@Query}", query);
+            
+            var result = await _sender.Send(query);
+            
+            if (result == null || !result.Items.Any())
+            {
+                _logger.LogWarning("No entities found for query: {@Query}", query);
+                return NotFound();
+            }
+            
+            _logger.LogInformation("Retrieved {Count} entities", result.Items.Count);
+            return Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            _logger.LogWarning("Validation error: {Message}", ex.Message);
+            return BadRequest(new { errors = ex.Errors });
+        }
+        catch (NotFoundException ex)
+        {
+            _logger.LogWarning("Entity not found: {Message}", ex.Message);
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving entities");
+            return StatusCode(500, new { message = "An error occurred while processing your request" });
+        }
     }
 }
 ```
@@ -70,8 +157,63 @@ public class FeatureEndpoints : EndpointGroupBase
     
     public override void Map(RouteGroupBuilder groupBuilder)
     {
-        groupBuilder.MapGet(GetStatus, "");
-        groupBuilder.MapPost(ProcessData, "process");
+        groupBuilder.MapGet(GetStatus, "")
+            .WithName("GetFeatureStatus")
+            .WithSummary("Get feature status")
+            .WithTags("Feature");
+            
+        groupBuilder.MapPost(ProcessData, "process")
+            .WithName("ProcessFeatureData")
+            .WithSummary("Process feature data")
+            .WithTags("Feature");
+    }
+    
+    public async Task<Results<Ok<FeatureStatus>, BadRequest<string>>> GetStatus(
+        ILogger<FeatureEndpoints> logger)
+    {
+        try
+        {
+            logger.LogInformation("Getting feature status");
+            
+            var status = new FeatureStatus
+            {
+                IsHealthy = true,
+                Timestamp = DateTime.UtcNow,
+                Version = "1.0.0"
+            };
+            
+            return TypedResults.Ok(status);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting feature status");
+            return TypedResults.BadRequest("Unable to get feature status");
+        }
+    }
+    
+    public async Task<Results<Ok<ProcessResult>, BadRequest<string>>> ProcessData(
+        ProcessDataRequest request,
+        ILogger<FeatureEndpoints> logger)
+    {
+        try
+        {
+            logger.LogInformation("Processing data: {@Request}", request);
+            
+            // Lightweight processing logic
+            var result = new ProcessResult
+            {
+                Success = true,
+                ProcessedAt = DateTime.UtcNow,
+                DataCount = request.Data?.Length ?? 0
+            };
+            
+            return TypedResults.Ok(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error processing data");
+            return TypedResults.BadRequest("Unable to process data");
+        }
     }
 }
 ```
@@ -119,21 +261,34 @@ public class FeatureEndpoints : EndpointGroupBase
 
 ### **FHIR Resources (MANDATORY):**
 - [ ] Route follows `/fhir/{resourceType}` pattern
-- [ ] FHIR R4 compliant response format
-- [ ] Proper FHIR resource validation
-- [ ] FHIR-specific error handling (OperationOutcome)
+- [ ] FHIR R4 compliant response format (Bundle, Resource, OperationOutcome)
+- [ ] Proper FHIR resource validation (required fields, data types)
+- [ ] FHIR-specific error handling (OperationOutcome with proper codes)
+- [ ] Resource versioning support (ETag headers)
+- [ ] Conditional requests support (If-Match, If-None-Match)
+- [ ] Search parameters validation and processing
+- [ ] Proper content negotiation (application/fhir+json)
 
 ### **Business Resources (RECOMMENDED):**
 - [ ] Route follows `/api/{entity}` pattern
-- [ ] Proper authorization attributes
-- [ ] Business logic validation
-- [ ] Standard HTTP status codes
+- [ ] Proper authorization attributes ([Authorize], policies)
+- [ ] Business logic validation (FluentValidation)
+- [ ] Standard HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- [ ] Comprehensive logging (structured logging with correlation IDs)
+- [ ] Input sanitization and validation
+- [ ] Proper error responses with meaningful messages
+- [ ] Pagination support for list endpoints
+- [ ] Sorting and filtering capabilities
 
 ### **Special Operations (FLEXIBLE):**
-- [ ] Lightweight implementation
-- [ ] Fast response times (< 100ms)
-- [ ] Minimal dependencies
-- [ ] Proper error handling
+- [ ] Lightweight implementation (minimal dependencies)
+- [ ] Fast response times (< 100ms target)
+- [ ] Minimal dependencies (avoid heavy frameworks)
+- [ ] Proper error handling with fallback responses
+- [ ] Health check endpoints for monitoring
+- [ ] Rate limiting considerations
+- [ ] Caching strategies where appropriate
+- [ ] Async/await patterns for non-blocking operations
 
 ## 🚀 **QUICK COMMANDS**
 ```bash

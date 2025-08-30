@@ -88,10 +88,35 @@ public class Entities : EndpointGroupBase
         groupBuilder.MapPost(CreateEntity).RequireAuthorization();
     }
     
-    public async Task<Ok<PaginatedList<EntityDto>>> GetEntities(ISender sender, [AsParameters] GetEntitiesQuery query)
+    public async Task<Results<Ok<PaginatedList<EntityDto>>, BadRequest<string>, NotFound>> GetEntities(
+        ISender sender, 
+        [AsParameters] GetEntitiesQuery query,
+        ILogger<Entities> logger)
     {
-        var result = await sender.Send(query);
-        return TypedResults.Ok(result);
+        try
+        {
+            logger.LogInformation("Getting entities with query: {@Query}", query);
+            
+            var result = await sender.Send(query);
+            
+            if (result == null || !result.Items.Any())
+            {
+                logger.LogWarning("No entities found");
+                return TypedResults.NotFound();
+            }
+            
+            return TypedResults.Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            logger.LogWarning("Validation error: {Message}", ex.Message);
+            return TypedResults.BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving entities");
+            return TypedResults.BadRequest("An error occurred");
+        }
     }
 }
 ```
@@ -102,6 +127,12 @@ public class Entities : EndpointGroupBase
 2. **Use authorization attributes**: `[Authorize(Roles = "Admin")]` on commands/queries
 3. **Validate input**: Use FluentValidation for all inputs
 4. **Handle errors**: Proper exception handling and HTTP status codes
+5. **Input sanitization**: Validate and sanitize all user inputs
+6. **Rate limiting**: Consider rate limiting for public endpoints
+7. **CORS configuration**: Proper CORS setup for web clients
+8. **HTTPS enforcement**: Always use HTTPS in production
+9. **Audit logging**: Log security-relevant events
+10. **Principle of least privilege**: Grant minimum required permissions
 
 ### 🧪 Testing Rules
 
@@ -157,13 +188,20 @@ dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities
 ### 📊 Quality Checklist
 
 - [ ] Solution builds successfully
-- [ ] All tests pass
-- [ ] No critical warnings
-- [ ] Follows naming conventions
-- [ ] Has proper authorization
-- [ ] Includes validation
-- [ ] Has meaningful tests
-- [ ] Documentation updated
+- [ ] All tests pass (unit, integration, functional)
+- [ ] No critical warnings or errors
+- [ ] Follows naming conventions consistently
+- [ ] Has proper authorization and security
+- [ ] Includes comprehensive validation
+- [ ] Has meaningful tests with good coverage
+- [ ] Documentation updated and accurate
+- [ ] Error handling implemented properly
+- [ ] Logging configured appropriately
+- [ ] Performance considerations addressed
+- [ ] Security best practices followed
+- [ ] Code follows SOLID principles
+- [ ] No code duplication
+- [ ] Proper async/await usage
 
 ---
 

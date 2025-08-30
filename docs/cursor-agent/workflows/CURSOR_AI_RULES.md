@@ -16,11 +16,11 @@ This single rule contains:
 
 ### **Decision Matrix (Quick Reference)**:
 ```
-IF "patient" OR "fhir" OR "healthcare" OR "medical" OR "clinical"
+IF "patient" OR "observation" OR "medication" OR "fhir" OR "healthcare" OR "medical" OR "clinical" OR "condition" OR "encounter" OR "diagnosis" OR "treatment"
     → USE Minimal API Endpoints (FHIR compliance - MANDATORY)
-ELSE IF "user" OR "todo" OR "task" OR "admin" OR "system" OR "analytics"
+ELSE IF "user" OR "todo" OR "task" OR "admin" OR "system" OR "analytics" OR "report" OR "dashboard" OR "organization" OR "department"
     → USE Controllers (Business logic - RECOMMENDED)
-ELSE IF "health" OR "webhook" OR "integration" OR "export" OR "import"
+ELSE IF "health" OR "webhook" OR "integration" OR "export" OR "import" OR "auth" OR "callback" OR "third-party"
     → USE Minimal API Endpoints (Special operations - FLEXIBLE)
 ELSE
     → USE Controllers (Default)
