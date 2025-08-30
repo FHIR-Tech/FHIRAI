@@ -29,19 +29,19 @@ src/
 ### Security & Authentication
 - **Authentication** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
 - **Authorization** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Security Rules
-- **JWT** → `README.md` → Authentication Flow
-- **Azure Key Vault** → `README.md` → Security Features
+- **JWT** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
+- **Azure Key Vault** → `docs/CURSOR_AI_RULES.md` → Security & Authentication Rules
 
 ### Database & Infrastructure
 - **Entity Framework** → `docs/CURSOR_AI_RULES.md` → Database Rules
 - **PostgreSQL** → `docs/CURSOR_AI_RULES.md` → PostgreSQL Configuration
 - **Migrations** → `docs/IMPLEMENTATION_CHECKLIST.md` → Database Implementation
-- **Azure Bicep** → `README.md` → Azure Infrastructure
+- **Azure Bicep** → `docs/CURSOR_AI_RULES.md` → Deployment Rules
 
 ### API Development
 - **Endpoints** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Endpoint Pattern
 - **Minimal APIs** → `docs/CURSOR_AI_RULES.md` → Presentation Layer Implementation
-- **Swagger** → `README.md` → API Documentation
+- **Swagger** → `docs/CURSOR_AI_RULES.md` → Code Quality Standards
 - **Validation** → `docs/CURSOR_AI_QUICK_REFERENCE.md` → Command Pattern
 
 ### Code Quality
@@ -110,11 +110,10 @@ az login && azd up
 - **Authentication**: Check JWT configuration and Azure Key Vault
 
 ## 📚 Reference Documents
-- **Master Structure**: `docs/DOCUMENTATION_STRUCTURE.md` - Complete documentation navigation
+- **Navigation Guide**: `docs/DOCUMENTATION_STRUCTURE.md` - AI navigation guide
 - **Development Rules**: `docs/CURSOR_AI_RULES.md` - Comprehensive development guidelines
 - **Quick Reference**: `docs/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Guide**: `docs/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation
-- **Project Overview**: `README.md` - Setup, architecture, deployment
 
 ---
 
