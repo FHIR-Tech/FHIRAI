@@ -135,7 +135,7 @@ az login && azd up
 - **Documentation**: Use proper templates and include metadata
 
 ## 📚 Reference Documents
-- **Navigation Guide**: `docs/DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+- **Navigation Guide**: `docs/cursor-agent/workflows/DOCUMENTATION_STRUCTURE.md` - AI navigation guide
 - **Development Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md` - Comprehensive development guidelines
 - **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Guide**: `docs/cursor-agent/workflows/IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation

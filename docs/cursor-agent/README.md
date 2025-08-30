@@ -10,6 +10,7 @@ This directory contains all Cursor AI related documentation, reports, and workfl
 docs/cursor-agent/
 ├── README.md                    # This file - Cursor Agent overview
 ├── workflows/                   # AI workflow rules and guidelines
+│   ├── DOCUMENTATION_STRUCTURE.md # AI Navigation Guide
 │   ├── CURSOR_AI_RULES.md      # Comprehensive development rules
 │   ├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
 │   └── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
@@ -27,6 +28,7 @@ docs/cursor-agent/
 
 ### Workflows Directory
 Contains the core rules and guidelines that Cursor AI follows when working with the FHIRAI project:
+- **Documentation Structure**: AI Navigation Guide for efficient project navigation
 - **Development Rules**: Comprehensive guidelines for Clean Architecture, CQRS, security, and best practices
 - **Quick Reference**: Fast access to common patterns and commands
 - **Implementation Checklist**: Step-by-step guides for feature development
@@ -60,6 +62,7 @@ Task tracking and milestone summaries:
 ## 🔄 Usage
 
 ### For Cursor AI
+- **Navigation Guide**: Use `workflows/DOCUMENTATION_STRUCTURE.md` for efficient project navigation
 - **Primary Rules**: Use `workflows/CURSOR_AI_RULES.md` for comprehensive development guidelines
 - **Quick Reference**: Use `workflows/CURSOR_AI_QUICK_REFERENCE.md` for common patterns
 - **Implementation**: Use `workflows/IMPLEMENTATION_CHECKLIST.md` for step-by-step processes
@@ -68,6 +71,7 @@ Task tracking and milestone summaries:
 - **Decisions**: Create ADRs in `decisions/` for significant architectural choices
 
 ### For Developers
+- **Navigation**: Use `workflows/DOCUMENTATION_STRUCTURE.md` for project navigation
 - **Reference**: Use workflow rules for development guidance
 - **Review**: Check implementation reports for recent changes
 - **Audit**: Review session logs for decision history
