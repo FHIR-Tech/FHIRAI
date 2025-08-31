@@ -40,6 +40,11 @@ public class EntityName : BaseEntity
     // Date and time related data
     
     // ========================================
+    // SOFT DELETE FIELDS
+    // ========================================
+    // Soft delete tracking fields
+    
+    // ========================================
     // ADDITIONAL DATA FIELDS
     // ========================================
     // Supplementary information and metadata
@@ -100,13 +105,24 @@ public class EntityName : BaseEntity
 
 ### 6. TIMING FIELDS
 **Purpose**: Date and time related data
-**Examples**: `CreatedAt`, `ModifiedAt`, `ExpiresAt`, `LastLoginAt`
+**Examples**: `CreatedAt`, `LastModifiedAt`, `ExpiresAt`, `LastLoginAt`
 **Rules**:
-- Use `DateTime` or `DateTime?` types
+- **MANDATORY**: Use `DateTimeOffset` for all timing fields (FHIR compliance)
 - Group timing fields logically
 - Include timezone considerations
+- Use `DateTimeOffset.UtcNow` for default values
 
-### 7. ADDITIONAL DATA FIELDS
+### 7. SOFT DELETE FIELDS
+**Purpose**: Soft delete tracking and audit trail
+**Examples**: `IsDeleted`, `DeletedAt`, `DeletedBy`
+**Rules**:
+- **MANDATORY**: Include soft delete fields for all entities
+- Use `bool IsDeleted` with default `false`
+- Use `DateTimeOffset? DeletedAt` for deletion timestamp
+- Use `string? DeletedBy` for user who deleted
+- Automatically handled by `AuditableEntityInterceptor`
+
+### 8. ADDITIONAL DATA FIELDS
 **Purpose**: Supplementary information and metadata
 **Examples**: `Tags`, `SearchParameters`, `EventData`
 **Rules**:
@@ -114,7 +130,7 @@ public class EntityName : BaseEntity
 - Include appropriate indexes for performance
 - Document complex data structures
 
-### 8. COMPUTED PROPERTIES
+### 9. COMPUTED PROPERTIES
 **Purpose**: Calculated or derived properties
 **Examples**: `DisplayName`, `Age`, `IsActive`
 **Rules**:
@@ -122,7 +138,7 @@ public class EntityName : BaseEntity
 - Should be read-only properties
 - Include clear documentation
 
-### 9. NAVIGATION PROPERTIES
+### 10. NAVIGATION PROPERTIES
 **Purpose**: Entity relationships and collections
 **Examples**: `User`, `Patient`, `ICollection<UserScope>`
 **Rules**:
@@ -172,6 +188,109 @@ Each section should have a brief description:
 // Essential identifying information for the entity
 ```
 
+### BaseEntity Structure
+
+```csharp
+public abstract class BaseEntity
+{
+    // ========================================
+    // CORE IDENTITY FIELDS
+    // ========================================
+    
+    /// <summary>
+    /// Primary key identifier for the entity
+    /// </summary>
+    [Key]
+    public Guid Id { get; set; } = Guid.NewGuid();
+}
+```
+
+### BaseAuditableEntity Structure
+
+```csharp
+public abstract class BaseAuditableEntity : BaseEntity
+{
+    // ========================================
+    // TIMING FIELDS
+    // ========================================
+    
+    /// <summary>
+    /// When the entity was created
+    /// </summary>
+    public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// Who created the entity
+    /// </summary>
+    public string? CreatedBy { get; set; }
+
+    /// <summary>
+    /// When the entity was last modified
+    /// </summary>
+    public DateTimeOffset LastModifiedAt { get; set; }
+
+    /// <summary>
+    /// Who last modified the entity
+    /// </summary>
+    public string? LastModifiedBy { get; set; }
+
+    // ========================================
+    // SOFT DELETE FIELDS
+    // ========================================
+    
+    /// <summary>
+    /// Whether the entity is marked as deleted (soft delete)
+    /// </summary>
+    public bool IsDeleted { get; set; } = false;
+
+    /// <summary>
+    /// When the entity was deleted
+    /// </summary>
+    public DateTimeOffset? DeletedAt { get; set; }
+
+    /// <summary>
+    /// Who deleted the entity
+    /// </summary>
+    public string? DeletedBy { get; set; }
+}
+```
+
+### Timezone Handling:
+```csharp
+// Server time (UTC)
+DateTimeOffset utcNow = DateTimeOffset.UtcNow; // 2024-01-15T10:30:00+00:00
+
+// Local time with offset
+DateTimeOffset localTime = DateTimeOffset.Now; // 2024-01-15T17:30:00+07:00
+
+// Convert to specific timezone
+TimeZoneInfo vietnamTz = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+DateTimeOffset vietnamTime = TimeZoneInfo.ConvertTime(utcNow, vietnamTz);
+```
+
+## Soft Delete Implementation
+
+### Automatic Handling:
+```csharp
+// AuditableEntityInterceptor automatically handles soft delete
+if (entry.State == EntityState.Deleted)
+{
+    entry.State = EntityState.Modified; // Change to modified instead of deleted
+    entry.Entity.IsDeleted = true;
+    entry.Entity.DeletedAt = _dateTime.GetUtcNow();
+    entry.Entity.DeletedBy = _user.Id;
+}
+```
+
+### Query Filtering:
+```csharp
+// Always filter out soft-deleted entities
+public IQueryable<T> GetActiveEntities<T>() where T : BaseAuditableEntity
+{
+    return _context.Set<T>().Where(e => !e.IsDeleted);
+}
+```
+
 ## Validation Attributes
 
 ### Required Fields
@@ -193,6 +312,16 @@ public string LimitedString { get; set; } = string.Empty;
 public string Email { get; set; } = string.Empty;
 ```
 
+### DateTimeOffset Fields
+```csharp
+[Required]
+public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+public DateTimeOffset? LastModifiedAt { get; set; }
+
+public DateTimeOffset? DeletedAt { get; set; }
+```
+
 ### JSONB Columns
 ```csharp
 [Column(TypeName = "jsonb")]
@@ -205,73 +334,7 @@ public string? JsonData { get; set; }
 public string ComputedProperty => $"{FirstName} {LastName}".Trim();
 ```
 
-## Entity-Specific Patterns
-
-### User Entity Pattern
-```csharp
-// CORE IDENTITY FIELDS
-// STATUS & CONFIGURATION FIELDS
-// SECURITY & AUTHENTICATION FIELDS
-// FHIR INTEGRATION FIELDS
-// TIMING & TRACKING FIELDS
-// COMPUTED PROPERTIES
-// NAVIGATION PROPERTIES
-```
-
-### Patient Entity Pattern
-```csharp
-// FHIR INTEGRATION FIELDS
-// CORE IDENTITY FIELDS
-// CONTACT INFORMATION FIELDS
-// STATUS & CONFIGURATION FIELDS
-// CONSENT FIELDS
-// EMERGENCY CONTACT FIELDS
-// COMPUTED PROPERTIES
-// NAVIGATION PROPERTIES
-```
-
-### FhirResource Entity Pattern
-```csharp
-// CORE IDENTITY FIELDS
-// FHIR DATA FIELDS
-// STATUS & TIMING FIELDS
-// SEARCH & SECURITY FIELDS
-// ADDITIONAL DATA FIELDS
-```
-
-### Session/Scope Entity Pattern
-```csharp
-// FOREIGN KEY FIELDS
-// CORE SESSION/SCOPE FIELDS
-// TIMING FIELDS
-// SECURITY & TRACKING FIELDS
-// REVOCATION FIELDS
-// COMPUTED PROPERTIES
-// NAVIGATION PROPERTIES
-```
-
-### Access Control Entity Pattern
-```csharp
-// FOREIGN KEY FIELDS
-// CORE ACCESS FIELDS
-// TIMING FIELDS
-// AUTHORIZATION FIELDS
-// EMERGENCY ACCESS FIELDS
-// STATUS FIELDS
-// COMPUTED PROPERTIES
-// NAVIGATION PROPERTIES
-```
-
-### Audit Entity Pattern
-```csharp
-// CORE EVENT FIELDS
-// USER CONTEXT FIELDS
-// RESOURCE CONTEXT FIELDS
-// ADDITIONAL DATA FIELDS
-// TIMING FIELDS
-```
-
-## Code Quality Rules
+## Type Usage Guidelines
 
 ### Naming Conventions
 - **Properties**: PascalCase
@@ -280,10 +343,10 @@ public string ComputedProperty => $"{FirstName} {LastName}".Trim();
 - **Enums**: PascalCase
 
 ### Type Usage
-- **Primary Keys**: `Guid` with `uuid_generate_v4()` default
+- **Primary Keys**: `Guid` with `Guid.NewGuid()` default (planned migration)
 - **Foreign Keys**: `Guid` for entity relationships
 - **Strings**: Use `string` with appropriate `MaxLength`
-- **Dates**: Use `DateTime` or `DateTime?`
+- **Dates**: **MANDATORY** Use `DateTimeOffset` for all timing fields
 - **Booleans**: Use `bool` with descriptive names
 - **Enums**: Use strongly-typed enums
 
@@ -292,11 +355,14 @@ public string ComputedProperty => $"{FirstName} {LastName}".Trim();
 // Good
 public string Name { get; set; } = string.Empty;
 public bool IsActive { get; set; } = true;
-public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+public bool IsDeleted { get; set; } = false;
+public Guid Id { get; set; } = Guid.NewGuid();
 
 // Avoid
 public string Name { get; set; } = null!;
 public bool IsActive { get; set; }
+public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // No timezone
 ```
 
 ## Enforcement
@@ -313,6 +379,10 @@ public bool IsActive { get; set; }
 - [ ] Validation attributes are appropriate
 - [ ] Navigation properties are properly configured
 - [ ] Computed properties are marked with `[NotMapped]`
+- [ ] **DateTimeOffset is used for all timing fields**
+- [ ] **Soft delete fields are included**
+- [ ] **Timezone considerations are addressed**
+- [ ] **Guid migration is planned and documented**
 
 ## Examples
 
@@ -327,7 +397,7 @@ namespace HealthTech.Domain.Entities;
 /// <summary>
 /// Example entity demonstrating proper field organization
 /// </summary>
-public class ExampleEntity : BaseEntity
+public class ExampleEntity : BaseAuditableEntity
 {
     // ========================================
     // FOREIGN KEY FIELDS
@@ -379,7 +449,7 @@ public class ExampleEntity : BaseEntity
     /// <summary>
     /// When entity expires
     /// </summary>
-    public DateTime? ExpiresAt { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
 
     // ========================================
     // COMPUTED PROPERTIES
@@ -389,7 +459,7 @@ public class ExampleEntity : BaseEntity
     /// Whether entity is currently active
     /// </summary>
     [NotMapped]
-    public bool IsActive => IsEnabled && (ExpiresAt == null || ExpiresAt > DateTime.UtcNow);
+    public bool IsActive => IsEnabled && !IsDeleted && (ExpiresAt == null || ExpiresAt > DateTimeOffset.UtcNow);
 
     // ========================================
     // NAVIGATION PROPERTIES
@@ -413,57 +483,9 @@ When creating or modifying domain entities, Cursor AI should:
 4. **Apply validation attributes** based on field type and purpose
 5. **Include XML documentation** for all fields
 6. **Follow naming conventions** consistently
+7. **MANDATORY**: Use `DateTimeOffset` for all timing fields
+8. **MANDATORY**: Include soft delete fields
+9. **PLANNED**: Use `Guid` for primary keys
 
 ### Prompt Integration
 Include this pattern in prompts when working with domain entities:
-
-```
-"Create a new domain entity following the FHIR-AI Backend field organization pattern:
-1. Foreign Key Fields
-2. Core Identity Fields  
-3. Basic Information Fields
-4. Status & Configuration Fields
-5. Security & Access Fields
-6. Timing Fields
-7. Additional Data Fields
-8. Computed Properties
-9. Navigation Properties
-
-Use proper visual separators and XML documentation."
-```
-
-## Current FHIRAI Entities Status
-
-### TodoItem Entity
-- **Status**: ✅ Refactored to follow pattern
-- **File**: `src/Domain/Entities/TodoItem.cs`
-- **Improvements Made**: 
-  - ✅ Added visual separators with proper formatting
-  - ✅ Organized fields according to the pattern
-  - ✅ Added XML documentation for all properties
-  - ✅ Added validation attributes (`[Required]`, `[MaxLength]`)
-  - ✅ Added computed properties (`IsOverdue`, `IsDueSoon`)
-  - ✅ Maintained existing business logic (domain events)
-
-### TodoList Entity
-- **Status**: ✅ Refactored to follow pattern
-- **File**: `src/Domain/Entities/TodoList.cs`
-- **Improvements Made**:
-  - ✅ Added visual separators with proper formatting
-  - ✅ Organized fields according to the pattern
-  - ✅ Added XML documentation for all properties
-  - ✅ Added validation attributes (`[Required]`, `[MaxLength]`)
-  - ✅ Added computed properties for list statistics
-  - ✅ Maintained existing collection initialization
-
-### Implementation Complete
-- ✅ All existing entities refactored to follow the pattern
-- ✅ Proper documentation and validation added
-- ✅ Entity configurations should be reviewed for consistency
-- ✅ New entities should follow this pattern from creation
-
-### Benefits Achieved
-1. **Code Consistency**: All entities follow the same organizational pattern
-2. **Improved Readability**: Clear section separation and logical grouping
-3. **Enhanced Maintainability**: XML documentation and validation attributes
-4. **Better Developer Experience**: Consistent patterns reduce cognitive load

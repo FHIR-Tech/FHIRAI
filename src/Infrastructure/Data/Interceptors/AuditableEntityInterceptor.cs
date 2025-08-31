@@ -50,6 +50,15 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
                 entry.Entity.LastModifiedBy = _user.Id;
                 entry.Entity.LastModified = utcNow;
             }
+            
+            // Handle soft delete
+            if (entry.State == EntityState.Deleted)
+            {
+                entry.State = EntityState.Modified; // Change to modified instead of deleted
+                entry.Entity.IsDeleted = true;
+                entry.Entity.DeletedAt = _dateTime.GetUtcNow();
+                entry.Entity.DeletedBy = _user.Id;
+            }
         }
     }
 }
