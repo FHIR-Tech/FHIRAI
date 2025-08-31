@@ -44,10 +44,10 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
                 var utcNow = _dateTime.GetUtcNow();
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.CreatedBy = _user.Id;
+                    entry.Entity.CreatedBy = _user.Id?.ToString() ?? "system";
                     entry.Entity.CreatedAt = utcNow;
                 } 
-                entry.Entity.LastModifiedBy = _user.Id;
+                entry.Entity.LastModifiedBy = _user.Id?.ToString() ?? "system";
                 entry.Entity.LastModifiedAt = utcNow;
             }
             
@@ -56,7 +56,7 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             {
                 entry.State = EntityState.Modified; // Change to modified instead of deleted
                 entry.Entity.IsDeleted = true;
-                entry.Entity.DeletedBy = _user.Id;
+                entry.Entity.DeletedBy = _user.Id?.ToString() ?? "system";
                 entry.Entity.DeletedAt = _dateTime.GetUtcNow();
             }
         }

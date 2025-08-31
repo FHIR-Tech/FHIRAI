@@ -82,12 +82,16 @@ public class CreateFhirResourceCommandValidator : AbstractValidator<CreateFhirRe
 
         try
         {
-            // Try to parse as FHIR JSON
+            // Try to parse as FHIR R4B JSON
             var parser = new FhirJsonParser();
             var resource = parser.Parse<Resource>(json);
             
-            // Additional validation: check if resource has required fields
+            // FHIR R4B validation: check if resource has required fields
             if (resource.Meta == null)
+                return false;
+                
+            // Validate resource type matches expected FHIR R4B type
+            if (!string.IsNullOrEmpty(resource.TypeName) && !IsValidFhirResourceType(resource.TypeName))
                 return false;
                 
             return true;
@@ -98,12 +102,34 @@ public class CreateFhirResourceCommandValidator : AbstractValidator<CreateFhirRe
         }
     }
 
+    private static bool IsValidFhirResourceType(string resourceType)
+    {
+        var validTypes = new[]
+        {
+            "Patient", "Observation", "Medication", "MedicationRequest", "Condition",
+            "Encounter", "Procedure", "DiagnosticReport", "ImagingStudy", "AllergyIntolerance",
+            "Immunization", "CarePlan", "Goal", "Questionnaire", "QuestionnaireResponse",
+            "DocumentReference", "Composition", "Practitioner", "Organization", "Location",
+            "Device", "Substance", "MedicationAdministration", "MedicationDispense",
+            "MedicationStatement", "Coverage", "Claim", "ExplanationOfBenefit", "Invoice",
+            "PaymentNotice", "PaymentReconciliation", "Account", "ChargeItem", "Contract",
+            "Group", "HealthcareService", "InsurancePlan", "Network", "PractitionerRole",
+            "ResearchStudy", "ResearchSubject", "Schedule", "Slot", "VerificationResult"
+        };
+        
+        return validTypes.Contains(resourceType);
+    }
+
     private static bool BeValidStatus(string status)
     {
         var validStatuses = new[]
         {
             "active", "inactive", "entered-in-error", "draft", "preliminary", "final",
-            "amended", "corrected", "cancelled", "entered-in-error", "unknown"
+            "amended", "corrected", "cancelled", "entered-in-error", "unknown",
+            "registered", "partial", "complete", "error", "unknown", "suspended",
+            "abandoned", "completed", "entered-in-error", "stopped", "on-hold",
+            "planned", "arrived", "triaged", "in-progress", "onleave", "finished",
+            "cancelled", "entered-in-error", "unknown", "suspended", "abandoned"
         };
         
         return validStatuses.Contains(status?.ToLower());

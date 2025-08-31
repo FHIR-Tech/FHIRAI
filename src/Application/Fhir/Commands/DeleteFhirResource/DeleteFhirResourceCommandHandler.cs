@@ -13,22 +13,22 @@ namespace FHIRAI.Application.Fhir.Commands.DeleteFhirResource;
 public class DeleteFhirResourceCommandHandler : IRequestHandler<DeleteFhirResourceCommand, DeleteFhirResourceResponse>
 {
     private readonly IFhirResourceRepository _fhirResourceRepository;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly IUser _user;
     private readonly ILogger<DeleteFhirResourceCommandHandler> _logger;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fhirResourceRepository">FHIR resource repository</param>
-    /// <param name="currentUserService">Current user service</param>
+    /// <param name="user">Current user</param>
     /// <param name="logger">Logger instance</param>
     public DeleteFhirResourceCommandHandler(
         IFhirResourceRepository fhirResourceRepository,
-        ICurrentUserService currentUserService,
+        IUser user,
         ILogger<DeleteFhirResourceCommandHandler> logger)
     {
         _fhirResourceRepository = fhirResourceRepository;
-        _currentUserService = currentUserService;
+        _user = user;
         _logger = logger;
     }
 
@@ -66,12 +66,12 @@ public class DeleteFhirResourceCommandHandler : IRequestHandler<DeleteFhirResour
             // Soft delete - mark as deleted
             existingResource.Status = "deleted";
             existingResource.LastUpdated = DateTime.UtcNow;
-            existingResource.LastModifiedBy = _currentUserService.UserId ?? "system";
+            existingResource.LastModifiedBy = _user.Id?.ToString() ?? "system";
             existingResource.LastModifiedAt = DateTimeOffset.UtcNow;
             
             existingResource.IsDeleted = true;
             existingResource.DeletedAt = DateTimeOffset.UtcNow;
-            existingResource.DeletedBy = _currentUserService.UserId ?? "system";
+            existingResource.DeletedBy = _user.Id?.ToString() ?? "system";
 
             // Mark as deleted for domain events
             existingResource.MarkAsDeleted();

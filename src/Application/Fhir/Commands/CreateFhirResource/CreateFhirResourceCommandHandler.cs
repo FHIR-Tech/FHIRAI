@@ -15,7 +15,7 @@ namespace FHIRAI.Application.Fhir.Commands.CreateFhirResource;
 public class CreateFhirResourceCommandHandler : IRequestHandler<CreateFhirResourceCommand, CreateFhirResourceResponse>
 {
     private readonly IFhirResourceRepository _fhirResourceRepository;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly IUser _user;
     private readonly ILogger<CreateFhirResourceCommandHandler> _logger;
 
     /// <summary>
@@ -26,11 +26,11 @@ public class CreateFhirResourceCommandHandler : IRequestHandler<CreateFhirResour
     /// <param name="logger">Logger instance</param>
     public CreateFhirResourceCommandHandler(
         IFhirResourceRepository fhirResourceRepository, 
-        ICurrentUserService currentUserService,
+        IUser user,
         ILogger<CreateFhirResourceCommandHandler> logger)
     {
         _fhirResourceRepository = fhirResourceRepository;
-        _currentUserService = currentUserService;
+        _user = user;
         _logger = logger;
     }
 
@@ -113,7 +113,7 @@ public class CreateFhirResourceCommandHandler : IRequestHandler<CreateFhirResour
             if (patient.Identifier?.Any() == true)
                 parameters["identifier"] = patient.Identifier.First().Value;
             if (patient.Name?.Any() == true)
-                parameters["name"] = patient.Name.First().Text ?? patient.Name.First().Given?.FirstOrDefault();
+                parameters["name"] = patient.Name.First().Text ?? patient.Name.First().Given?.FirstOrDefault() ?? string.Empty;
         }
         else if (resource is Observation observation)
         {

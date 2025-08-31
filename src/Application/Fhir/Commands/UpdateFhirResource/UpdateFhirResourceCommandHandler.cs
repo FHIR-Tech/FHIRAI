@@ -15,22 +15,22 @@ namespace FHIRAI.Application.Fhir.Commands.UpdateFhirResource;
 public class UpdateFhirResourceCommandHandler : IRequestHandler<UpdateFhirResourceCommand, UpdateFhirResourceResponse>
 {
     private readonly IFhirResourceRepository _fhirResourceRepository;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly IUser _user;
     private readonly ILogger<UpdateFhirResourceCommandHandler> _logger;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fhirResourceRepository">FHIR resource repository</param>
-    /// <param name="currentUserService">Current user service</param>
+    /// <param name="user">Current user</param>
     /// <param name="logger">Logger instance</param>
     public UpdateFhirResourceCommandHandler(
         IFhirResourceRepository fhirResourceRepository,
-        ICurrentUserService currentUserService,
+        IUser user,
         ILogger<UpdateFhirResourceCommandHandler> logger)
     {
         _fhirResourceRepository = fhirResourceRepository;
-        _currentUserService = currentUserService;
+        _user = user;
         _logger = logger;
     }
 
@@ -66,7 +66,7 @@ public class UpdateFhirResourceCommandHandler : IRequestHandler<UpdateFhirResour
             existingResource.VersionId++;
             existingResource.ResourceJson = request.ResourceJson;
             existingResource.LastUpdated = DateTime.UtcNow;
-            existingResource.LastModifiedBy = _currentUserService.UserId ?? "system";
+            existingResource.LastModifiedBy = _user.Id?.ToString() ?? "system";
             existingResource.LastModifiedAt = DateTimeOffset.UtcNow;
             
             // Update optional fields if provided
@@ -128,7 +128,7 @@ public class UpdateFhirResourceCommandHandler : IRequestHandler<UpdateFhirResour
             if (patient.Identifier?.Any() == true)
                 parameters["identifier"] = patient.Identifier.First().Value;
             if (patient.Name?.Any() == true)
-                parameters["name"] = patient.Name.First().Text ?? patient.Name.First().Given?.FirstOrDefault();
+                parameters["name"] = patient.Name.First().Text ?? patient.Name.First().Given?.FirstOrDefault() ?? string.Empty;
         }
         else if (resource is Observation observation)
         {
