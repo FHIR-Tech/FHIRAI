@@ -45,10 +45,10 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedBy = _user.Id;
-                    entry.Entity.Created = utcNow;
+                    entry.Entity.CreatedAt = utcNow;
                 } 
                 entry.Entity.LastModifiedBy = _user.Id;
-                entry.Entity.LastModified = utcNow;
+                entry.Entity.LastModifiedAt = utcNow;
             }
             
             // Handle soft delete
@@ -56,8 +56,8 @@ public class AuditableEntityInterceptor : SaveChangesInterceptor
             {
                 entry.State = EntityState.Modified; // Change to modified instead of deleted
                 entry.Entity.IsDeleted = true;
-                entry.Entity.DeletedAt = _dateTime.GetUtcNow();
                 entry.Entity.DeletedBy = _user.Id;
+                entry.Entity.DeletedAt = _dateTime.GetUtcNow();
             }
         }
     }

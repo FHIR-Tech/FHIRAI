@@ -14,6 +14,10 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
         // Primary key
         builder.HasKey(t => t.Id);
 
+        // Id configuration for Guid
+        builder.Property(t => t.Id)
+            .HasDefaultValueSql("gen_random_uuid()");
+
         // Properties configuration
         builder.Property(t => t.ListId)
             .IsRequired();
@@ -47,13 +51,13 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
         builder.HasIndex(t => t.Reminder);
 
         // Audit properties (inherited from BaseAuditableEntity)
-        builder.Property(t => t.Created)
+        builder.Property(t => t.CreatedAt)
             .IsRequired();
 
         builder.Property(t => t.CreatedBy)
             .HasMaxLength(100);
 
-        builder.Property(t => t.LastModified);
+        builder.Property(t => t.LastModifiedAt);
 
         builder.Property(t => t.LastModifiedBy)
             .HasMaxLength(100);

@@ -1,9 +1,9 @@
 ﻿using FHIRAI.Application.Common.Interfaces;
-using FHIRAI.Domain.Events;
+using FHIRAI.Domain.Entities;
 
 namespace FHIRAI.Application.TodoItems.Commands.DeleteTodoItem;
 
-public record DeleteTodoItemCommand(int Id) : IRequest;
+public record DeleteTodoItemCommand(Guid Id) : IRequest;
 
 public class DeleteTodoItemCommandHandler : IRequestHandler<DeleteTodoItemCommand>
 {
@@ -23,9 +23,6 @@ public class DeleteTodoItemCommandHandler : IRequestHandler<DeleteTodoItemComman
 
         _context.TodoItems.Remove(entity);
 
-        entity.AddDomainEvent(new TodoItemDeletedEvent(entity));
-
         await _context.SaveChangesAsync(cancellationToken);
     }
-
 }

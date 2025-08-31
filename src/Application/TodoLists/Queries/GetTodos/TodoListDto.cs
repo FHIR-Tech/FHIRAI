@@ -1,21 +1,18 @@
-﻿using FHIRAI.Domain.Entities;
+﻿using FHIRAI.Application.Common.Models;
+using FHIRAI.Domain.Entities;
+using FHIRAI.Domain.ValueObjects;
 
 namespace FHIRAI.Application.TodoLists.Queries.GetTodos;
 
 public class TodoListDto
 {
-    public TodoListDto()
-    {
-        Items = Array.Empty<TodoItemDto>();
-    }
-
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 
     public string? Title { get; init; }
 
-    public string? Colour { get; init; }
+    public ColourDto Colour { get; init; } = new();
 
-    public IReadOnlyCollection<TodoItemDto> Items { get; init; }
+    public IList<TodoItemDto> Items { get; init; } = new List<TodoItemDto>();
 
     private class Mapping : Profile
     {

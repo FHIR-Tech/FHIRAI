@@ -41,8 +41,8 @@ public class CreateTodoItemTests : BaseTestFixture
         item!.ListId.ShouldBe(command.ListId);
         item.Title.ShouldBe(command.Title);
         item.CreatedBy.ShouldBe(userId);
-        item.Created.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.CreatedAt.ShouldBe(DateTimeOffset.UtcNow, TimeSpan.FromMilliseconds(10000));
         item.LastModifiedBy.ShouldBe(userId);
-        item.LastModified.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        item.LastModifiedAt.ShouldBe(DateTimeOffset.UtcNow, TimeSpan.FromMilliseconds(10000));
     }
 }

@@ -1,12 +1,16 @@
 ﻿using FHIRAI.Application.Common.Interfaces;
+using FHIRAI.Application.Common.Models;
+using FHIRAI.Domain.Entities;
 
 namespace FHIRAI.Application.TodoLists.Commands.UpdateTodoList;
 
 public record UpdateTodoListCommand : IRequest
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
 
     public string? Title { get; init; }
+
+    public ColourDto Colour { get; init; } = new();
 }
 
 public class UpdateTodoListCommandHandler : IRequestHandler<UpdateTodoListCommand>
@@ -26,8 +30,8 @@ public class UpdateTodoListCommandHandler : IRequestHandler<UpdateTodoListComman
         Guard.Against.NotFound(request.Id, entity);
 
         entity.Title = request.Title;
+        entity.Colour = request.Colour;
 
         await _context.SaveChangesAsync(cancellationToken);
-
     }
 }

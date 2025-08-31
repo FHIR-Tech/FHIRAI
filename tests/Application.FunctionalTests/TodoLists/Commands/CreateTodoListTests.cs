@@ -48,6 +48,6 @@ public class CreateTodoListTests : BaseTestFixture
         list.ShouldNotBeNull();
         list!.Title.ShouldBe(command.Title);
         list.CreatedBy.ShouldBe(userId);
-        list.Created.ShouldBe(DateTime.Now, TimeSpan.FromMilliseconds(10000));
+        list.CreatedAt.ShouldBe(DateTimeOffset.UtcNow, TimeSpan.FromMilliseconds(10000));
     }
 }

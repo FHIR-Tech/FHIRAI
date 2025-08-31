@@ -19,7 +19,7 @@ public class TodoItem : BaseAuditableEntity
     /// Foreign key to the parent todo list
     /// </summary>
     [Required]
-    public int ListId { get; set; }
+    public Guid ListId { get; set; }
 
     // ========================================
     // CORE IDENTITY FIELDS
