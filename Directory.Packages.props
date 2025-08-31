@@ -40,12 +40,11 @@
     <PackageVersion Include="Respawn" Version="6.2.1" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
-
-    
     
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.1" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.0.0" />
     
+    <PackageVersion Include="Hl7.Fhir.R4B" Version="5.12.2" />
     
   </ItemGroup>
 </Project>
