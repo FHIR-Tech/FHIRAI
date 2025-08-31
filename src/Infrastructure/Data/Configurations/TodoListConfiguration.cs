@@ -18,13 +18,12 @@ public class TodoListConfiguration : IEntityTypeConfiguration<TodoList>
         builder.Property(t => t.Title)
             .HasMaxLength(200);
 
-        builder.Property(t => t.Colour)
-            .IsRequired()
-            .HasDefaultValue(Domain.ValueObjects.Colour.White);
-
         // Value object configuration
         builder
-            .OwnsOne(b => b.Colour);
+            .OwnsOne(b => b.Colour)
+            .Property(c => c.Code)
+            .HasMaxLength(7)
+            .IsRequired();
 
         // Audit properties (inherited from BaseAuditableEntity)
         builder.Property(t => t.Created)
