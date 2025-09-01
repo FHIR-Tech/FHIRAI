@@ -3,6 +3,8 @@ using FHIRAI.Domain.Constants;
 using FHIRAI.Infrastructure.Data;
 using FHIRAI.Infrastructure.Data.Interceptors;
 using FHIRAI.Infrastructure.Identity;
+using FHIRAI.Domain.Repositories;
+using FHIRAI.Infrastructure.Data.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -32,6 +34,8 @@ public static class DependencyInjection
         builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
+
+        builder.Services.AddScoped<IFhirResourceRepository, FhirResourceRepository>();
 
         builder.Services.AddAuthentication()
             .AddBearerToken(IdentityConstants.BearerScheme);

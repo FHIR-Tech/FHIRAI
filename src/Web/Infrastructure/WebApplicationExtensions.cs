@@ -8,8 +8,12 @@ public static class WebApplicationExtensions
     {
         var groupName = group.GroupName ?? group.GetType().Name;
 
+        var basePath = groupName.Equals("fhir", StringComparison.OrdinalIgnoreCase)
+            ? "/fhir"
+            : $"/api/{groupName}";
+
         return app
-            .MapGroup($"/api/{groupName}")
+            .MapGroup(basePath)
             .WithGroupName(groupName)
             .WithTags(groupName);
     }
