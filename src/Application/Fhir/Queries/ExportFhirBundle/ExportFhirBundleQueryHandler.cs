@@ -4,6 +4,7 @@ using FHIRAI.Domain.Repositories;
 using FHIRAI.Domain.Entities;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Diagnostics;
 
 namespace FHIRAI.Application.Fhir.Queries.ExportFhirBundle;
@@ -14,7 +15,7 @@ namespace FHIRAI.Application.Fhir.Queries.ExportFhirBundle;
 public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuery, ExportFhirBundleResponse>
 {
     private readonly IFhirResourceRepository _fhirResourceRepository;
-    private readonly ICurrentUserService _currentUserService;
+    private readonly IUser _user;
     private readonly ILogger<ExportFhirBundleQueryHandler> _logger;
 
     /// <summary>
@@ -25,11 +26,11 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
     /// <param name="logger">Logger instance</param>
     public ExportFhirBundleQueryHandler(
         IFhirResourceRepository fhirResourceRepository,
-        ICurrentUserService currentUserService,
+        IUser currentUserService,
         ILogger<ExportFhirBundleQueryHandler> logger)
     {
         _fhirResourceRepository = fhirResourceRepository;
-        _currentUserService = currentUserService;
+        _user = currentUserService;
         _logger = logger;
     }
 
@@ -115,7 +116,7 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
             }
 
             // Get history if requested
-            var historyResources = new List<FhirResourceDto>();
+            var historyResources = new List<FhirResource>();
             if (request.IncludeHistory)
             {
                 var resourceIds = filteredResources.Select(r => new { r.ResourceType, r.FhirId }).Distinct();
@@ -125,7 +126,6 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                     var history = await _fhirResourceRepository.GetHistoryAsync(
                         resourceId.ResourceType,
                         resourceId.FhirId,
-                        request.PageNumber,
                         request.MaxHistoryVersions,
                         cancellationToken);
 
@@ -158,7 +158,7 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
             return new ExportFhirBundleResponse
             {
                 BundleJson = bundleJson,
-                BundleMetadata = new BundleMetadata
+                Metadata = new ExportFhirBundleResponse.BundleMetadata
                 {
                     BundleType = request.BundleType,
                     Format = "json",
@@ -170,13 +170,12 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                     ExportDurationMs = stopwatch.ElapsedMilliseconds,
                     BundleSizeBytes = System.Text.Encoding.UTF8.GetByteCount(bundleJson)
                 },
-                ExportStatistics = new ExportStatistics
+                Statistics = new ExportFhirBundleResponse.ExportStatistics
                 {
-                    TotalProcessed = totalCount,
-                    Exported = filteredResources.Count,
-                    HistoryIncluded = historyResources.Count,
-                    Skipped = totalCount - filteredResources.Count,
-                    ExportDurationMs = stopwatch.ElapsedMilliseconds
+                    ResourcesProcessed = totalCount,
+                    ResourcesIncluded = filteredResources.Count,
+                    HistoryVersionsIncluded = historyResources.Count,
+                    ResourcesExcluded = totalCount - filteredResources.Count
                 }
             };
         }
@@ -294,7 +293,7 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
     /// <param name="request">Export request</param>
     /// <param name="timestamp">Bundle timestamp</param>
     /// <returns>FHIR R4B bundle object</returns>
-    private static object BuildFhirBundle(IEnumerable<FhirResourceDto> resources, IEnumerable<FhirResourceDto> historyResources, ExportFhirBundleQuery request, DateTime timestamp)
+    private static object BuildFhirBundle(IEnumerable<FhirResource> resources, IEnumerable<FhirResource> historyResources, ExportFhirBundleQuery request, DateTime timestamp)
     {
         var allResources = resources.Concat(historyResources).ToList();
         var entries = new List<object>();
@@ -315,10 +314,10 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                     {
                         if (property.Name != "contained")
                         {
-                            resourceWithoutContained.Add(property.Name, property.Value);
+                            resourceWithoutContained.Add(property.Name, JsonNode.Parse(property.Value.GetRawText()));
                         }
                     }
-                    resourceObj = resourceWithoutContained.AsJsonElement();
+                    resourceObj = JsonSerializer.Deserialize<JsonElement>(resourceWithoutContained.ToJsonString());
                 }
             }
 
@@ -333,10 +332,10 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                     {
                         if (property.Name != "extension")
                         {
-                            resourceWithoutExtensions.Add(property.Name, property.Value);
+                            resourceWithoutExtensions.Add(property.Name, JsonNode.Parse(property.Value.GetRawText()));
                         }
                     }
-                    resourceObj = resourceWithoutExtensions.AsJsonElement();
+                    resourceObj = JsonSerializer.Deserialize<JsonElement>(resourceWithoutExtensions.ToJsonString());
                 }
             }
 
@@ -351,10 +350,10 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                     {
                         if (property.Name != "meta")
                         {
-                            resourceWithoutMeta.Add(property.Name, property.Value);
+                            resourceWithoutMeta.Add(property.Name, JsonNode.Parse(property.Value.GetRawText()));
                         }
                     }
-                    resourceObj = resourceWithoutMeta.AsJsonElement();
+                    resourceObj = JsonSerializer.Deserialize<JsonElement>(resourceWithoutMeta.ToJsonString());
                 }
             }
             

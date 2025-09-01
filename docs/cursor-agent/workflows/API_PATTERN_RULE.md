@@ -4,6 +4,7 @@
 - [🎯 Cursor AI Auto-Discovery & Implementation Guide](#-cursor-ai-auto-discovery--implementation-guide)
 - [📁 File Locations & Routes](#-file-locations--routes)
 - [✅ Validation Checklists](#-validation-checklists)
+- [👤 User Handling Patterns](#-user-handling-patterns)
 - [🚀 Quick Commands](#-quick-commands)
 - [📚 Reference Files](#-reference-files)
 - [🎯 When to Reference Other Files](#-when-to-reference-other-files)
@@ -326,6 +327,7 @@ az login && azd up
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Quick reference for common patterns
 - **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+- **User Handling**: `USER_HANDLING_GUIDE.md` - User context patterns and best practices
 
 
 
@@ -441,6 +443,292 @@ var routePrefix = instance.GroupName switch
 - **Configurations**: `{EntityName}Configuration.cs`
 - **Reports**: `{report-type}_{date}.md`
 - **Samples**: `{resource-type}_{purpose}_{date}.json`
+
+## 👤 **USER HANDLING PATTERNS**
+
+### **IUser _user Usage Guidelines**
+
+#### **1. Dependency Injection Pattern**
+```csharp
+// ✅ CORRECT: Inject IUser in constructor
+public class CreateEntityCommandHandler : IRequestHandler<CreateEntityCommand, int>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IUser _user;  // Always use IUser _user naming
+    private readonly ILogger<CreateEntityCommandHandler> _logger;
+
+    public CreateEntityCommandHandler(
+        IApplicationDbContext context,
+        IUser user,  // Inject IUser interface
+        ILogger<CreateEntityCommandHandler> logger)
+    {
+        _context = context;
+        _user = user;
+        _logger = logger;
+    }
+}
+```
+
+#### **2. User Information Access Patterns**
+```csharp
+// ✅ CORRECT: Access user information safely
+public async Task<int> Handle(CreateEntityCommand request, CancellationToken cancellationToken)
+{
+    // Get user ID safely
+    var userId = _user.Id ?? "system";
+    var userRoles = _user.Roles ?? new List<string>();
+
+    // Log with user context
+    _logger.LogInformation("Creating entity for user {UserId} with roles {Roles}", 
+        userId, string.Join(",", userRoles));
+
+    // Use user information for business logic
+    var entity = new Entity
+    {
+        Name = request.Name,
+        CreatedBy = userId,  // Set audit fields
+        // ... other properties
+    };
+
+    // Authorization check
+    if (!userRoles.Contains("Admin") && !CanCreateEntity(userId, request))
+    {
+        throw new ForbiddenAccessException("User does not have permission to create this entity");
+    }
+
+    _context.Entities.Add(entity);
+    await _context.SaveChangesAsync(cancellationToken);
+
+    return entity.Id;
+}
+```
+
+#### **3. Authorization Patterns**
+```csharp
+// ✅ CORRECT: Role-based authorization
+private bool CanCreateEntity(string userId, CreateEntityCommand request)
+{
+    // Check user permissions
+    if (_user.Roles?.Contains("Admin") == true) return true;
+    if (_user.Roles?.Contains("Manager") == true) return true;
+    
+    // Check ownership or specific business rules
+    return CheckUserOwnership(userId, request);
+}
+
+// ✅ CORRECT: Policy-based authorization
+private async Task<bool> CanAccessEntity(string userId, int entityId)
+{
+    var userRoles = _user.Roles ?? new List<string>();
+    
+    // Admin can access everything
+    if (userRoles.Contains("Admin")) return true;
+    
+    // Check entity ownership
+    var entity = await _context.Entities
+        .FirstOrDefaultAsync(e => e.Id == entityId);
+    
+    return entity?.CreatedBy == userId;
+}
+```
+
+#### **4. Audit Trail Patterns**
+```csharp
+// ✅ CORRECT: Use user information for audit trail
+public async Task<int> Handle(UpdateEntityCommand request, CancellationToken cancellationToken)
+{
+    var userId = _user.Id ?? "system";
+    
+    var entity = await _context.Entities
+        .FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+    
+    if (entity == null)
+        throw new NotFoundException(nameof(Entity), request.Id);
+
+    // Update audit fields (handled by AuditableEntityInterceptor)
+    entity.Name = request.Name;
+    entity.LastModifiedBy = userId;  // This will be overridden by interceptor
+    
+    await _context.SaveChangesAsync(cancellationToken);
+    
+    _logger.LogInformation("Entity {Id} updated by user {UserId}", request.Id, userId);
+    
+    return entity.Id;
+}
+```
+
+#### **5. Logging with User Context**
+```csharp
+// ✅ CORRECT: Include user context in all logs
+public async Task<int> Handle(DeleteEntityCommand request, CancellationToken cancellationToken)
+{
+    var userId = _user.Id ?? "system";
+    var userRoles = _user.Roles ?? new List<string>();
+
+    _logger.LogInformation("User {UserId} with roles {Roles} attempting to delete entity {Id}", 
+        userId, string.Join(",", userRoles), request.Id);
+
+    try
+    {
+        // Business logic here
+        var result = await ProcessDeletion(request, userId, cancellationToken);
+        
+        _logger.LogInformation("Entity {Id} successfully deleted by user {UserId}", 
+            request.Id, userId);
+        
+        return result;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Failed to delete entity {Id} by user {UserId}", 
+            request.Id, userId);
+        throw;
+    }
+}
+```
+
+#### **6. Error Handling with User Context**
+```csharp
+// ✅ CORRECT: Include user information in error handling
+public async Task<int> Handle(GetEntityByIdQuery request, CancellationToken cancellationToken)
+{
+    var userId = _user.Id ?? "system";
+    
+    try
+    {
+        var entity = await _context.Entities
+            .FirstOrDefaultAsync(e => e.Id == request.Id, cancellationToken);
+
+        if (entity == null)
+        {
+            _logger.LogWarning("Entity {Id} not found for user {UserId}", request.Id, userId);
+            throw new NotFoundException(nameof(Entity), request.Id);
+        }
+
+        // Check access permissions
+        if (!await HasAccessToEntity(userId, entity))
+        {
+            _logger.LogWarning("User {UserId} denied access to entity {Id}", userId, request.Id);
+            throw new ForbiddenAccessException($"User {userId} does not have access to entity {request.Id}");
+        }
+
+        return entity.Id;
+    }
+    catch (Exception ex) when (ex is not NotFoundException && ex is not ForbiddenAccessException)
+    {
+        _logger.LogError(ex, "Error retrieving entity {Id} for user {UserId}", request.Id, userId);
+        throw;
+    }
+}
+```
+
+### **User Information Best Practices**
+
+#### **✅ DO's:**
+- **Always inject `IUser`** in command/query handlers
+- **Use `_user.Id`** for audit trails and ownership checks
+- **Use `_user.Roles`** for authorization decisions
+- **Include user context** in all log messages
+- **Handle null user gracefully** (fallback to "system")
+- **Use user information** for business logic validation
+- **Log user actions** for audit purposes
+
+#### **❌ DON'Ts:**
+- **Don't hardcode user IDs** in business logic
+- **Don't ignore user context** in logs
+- **Don't assume user is always authenticated** (check for null)
+- **Don't bypass authorization** checks
+- **Don't store sensitive user data** in logs
+- **Don't use user information** without proper validation
+
+### **User Context in Different Patterns**
+
+#### **FHIR Endpoints (MANDATORY)**
+```csharp
+public async Task<Results<Ok<Bundle>, NotFound, BadRequest<OperationOutcome>>> GetResource(
+    ISender sender, 
+    string resourceType, 
+    [AsParameters] GetFhirResourceQuery query)
+{
+    // User context is handled by AuthorizationBehaviour
+    // No need to inject IUser directly in endpoints
+    var result = await sender.Send(query);
+    return TypedResults.Ok(result);
+}
+```
+
+#### **Business Controllers (RECOMMENDED)**
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class EntityController : ControllerBase
+{
+    private readonly ISender _sender;
+    private readonly ILogger<EntityController> _logger;
+
+    public EntityController(ISender sender, ILogger<EntityController> logger)
+    {
+        _sender = sender;
+        _logger = logger;
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<EntityDto>> GetEntity(int id)
+    {
+        // User context is handled by AuthorizationBehaviour in the handler
+        var query = new GetEntityByIdQuery { Id = id };
+        var result = await _sender.Send(query);
+        return Ok(result);
+    }
+}
+```
+
+#### **Special Operations (FLEXIBLE)**
+```csharp
+public async Task<Results<Ok<FeatureStatus>, BadRequest<string>>> GetStatus(
+    ILogger<FeatureEndpoints> logger)
+{
+    // For special operations, user context may not be required
+    // But still log the operation for audit purposes
+    logger.LogInformation("Feature status requested");
+    
+    var status = new FeatureStatus
+    {
+        IsHealthy = true,
+        Timestamp = DateTime.UtcNow,
+        Version = "1.0.0"
+    };
+    
+    return TypedResults.Ok(status);
+}
+```
+
+### **User Information Validation Checklist**
+
+#### **For All Handlers:**
+- [ ] `IUser _user` is injected in constructor
+- [ ] User ID is safely accessed with null check
+- [ ] User roles are safely accessed with null check
+- [ ] User context is included in log messages
+- [ ] Authorization checks are performed
+- [ ] Audit fields are properly set
+- [ ] Error handling includes user context
+- [ ] Business logic respects user permissions
+
+#### **For FHIR Resources:**
+- [ ] User has permission to access FHIR resources
+- [ ] User context is logged for FHIR operations
+- [ ] Audit trail includes user information
+- [ ] Security labels respect user roles
+- [ ] Patient data access follows privacy rules
+
+#### **For Business Resources:**
+- [ ] User ownership is checked
+- [ ] Role-based access control is implemented
+- [ ] User actions are logged for audit
+- [ ] Data access follows business rules
+- [ ] User permissions are validated
 
 ---
 

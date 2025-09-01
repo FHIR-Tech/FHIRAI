@@ -250,12 +250,12 @@ public class FhirResourceRepository : IFhirResourceRepository
     /// <param name="fhirId">FHIR resource ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Collection of FHIR resource versions</returns>
-    public async Task<IEnumerable<FhirResource>> GetHistoryAsync(string resourceType, string fhirId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<FhirResource>> GetHistoryAsync(string resourceType, string fhirId, int maxVersions = 100, CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Getting FHIR resource history: {ResourceType}/{FhirId}", resourceType, fhirId);
         
         return await _context.FhirResources
-            .Where(r => r.ResourceType == resourceType && r.FhirId == fhirId && !r.IsDeleted)
+            .Where(r => r.ResourceType == resourceType && r.FhirId == fhirId && r.VersionId <= maxVersions && !r.IsDeleted)
             .OrderByDescending(r => r.VersionId)
             .ToListAsync(cancellationToken);
     }

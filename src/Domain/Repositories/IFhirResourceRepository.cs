@@ -45,7 +45,7 @@ public interface IFhirResourceRepository : IRepository<FhirResource>
     /// <param name="fhirId">FHIR resource ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Collection of FHIR resource versions</returns>
-    Task<IEnumerable<FhirResource>> GetHistoryAsync(string resourceType, string fhirId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<FhirResource>> GetHistoryAsync(string resourceType, string fhirId, int maxVersions = 100, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get FHIR resource by version

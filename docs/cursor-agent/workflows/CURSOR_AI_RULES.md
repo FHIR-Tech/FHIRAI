@@ -79,6 +79,7 @@ Always respond with the standardized format from optimized rule:
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+- **User Handling**: `USER_HANDLING_GUIDE.md` - User context patterns and best practices
 
 ## 🎯 **KEY PRINCIPLES**
 
