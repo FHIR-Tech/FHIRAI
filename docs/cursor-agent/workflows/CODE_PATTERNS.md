@@ -1,5 +1,29 @@
 # FHIRAI - Hướng dẫn Mẫu Code (Code Patterns Guide)
 
+## Mục lục (Table of Contents)
+
+- [1. Tổng quan (Overview)](#1-tổng-quan-overview)
+  - [1.1. Các Tầng Kiến trúc (Architecture Layers)](#11-các-tầng-kiến-trúc-architecture-layers)
+- [2. Cấu trúc & Quy ước (Structure & Conventions)](#2-cấu-trúc--quy-ước-structure--conventions)
+  - [2.1. Quy ước Đặt tên (Naming Conventions)](#21-quy-ước-đặt-tên-naming-conventions)
+  - [2.2. Cấu trúc Thư mục (File Structure Patterns)](#22-cấu-trúc-thư-mục-file-structure-patterns)
+- [3. Mẫu Lớp Domain (Domain Layer Patterns)](#3-mẫu-lớp-domain-domain-layer-patterns)
+  - [3.1. Mẫu Entity (Entity Patterns)](#31-mẫu-entity-entity-patterns)
+  - [3.2. Mẫu Cấu hình Entity (Entity Configuration Pattern)](#32-mẫu-cấu-hình-entity-entity-configuration-pattern)
+  - [3.3. Mẫu Sự kiện Domain (Domain Event Pattern)](#33-mẫu-sự-kiện-domain-domain-event-pattern)
+- [4. Mẫu Lớp Ứng dụng (Application Layer Patterns)](#4-mẫu-lớp-ứng-dụng-application-layer-patterns)
+  - [4.1. Command Pattern (Thao tác Ghi - Write Operations)](#41-command-pattern-thao-tác-ghi---write-operations)
+  - [4.2. Query Pattern (Thao tác Đọc - Read Operations)](#42-query-pattern-thao-tác-đọc---read-operations)
+  - [4.3. Mẫu GetById/GetDetail (Chi tiết đối tượng)](#43-mẫu-getbyidgetdetail-chi-tiết-đối-tượng)
+  - [4.4. Mẫu Phân trang (Paging Patterns)](#44-mẫu-phân-trang-paging-patterns)
+  - [4.5. Mẫu DTO (Data Transfer Objects)](#45-mẫu-dto-data-transfer-objects)
+  - [4.6. Mẫu AutoMapper (AutoMapper Patterns)](#46-mẫu-automapper-automapper-patterns)
+- [5. Mẫu Lớp Web & API (Web & API Layer Patterns)](#5-mẫu-lớp-web--api-web--api-layer-patterns)
+  - [5.1. Mẫu Endpoint (Minimal APIs)](#51-mẫu-endpoint-minimal-apis)
+  - [5.2. Mẫu Triển khai API (API Implementation Templates)](#52-mẫu-triển-khai-api-api-implementation-templates)
+
+---
+
 ## 1. Tổng quan (Overview)
 
 FHIRAI sử dụng **Clean Architecture** với **MediatR**, **AutoMapper**, và **Entity Framework Core**. Tài liệu này cung cấp các mẫu (patterns) chuẩn để triển khai tính năng một cách nhất quán và hiệu quả.
