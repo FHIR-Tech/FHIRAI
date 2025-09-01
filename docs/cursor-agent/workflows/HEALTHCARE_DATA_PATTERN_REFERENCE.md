@@ -37,14 +37,14 @@ Cursor AI MUST automatically determine the correct API pattern based on the feat
 **2. Business/System Resources → Controller (RECOMMENDED)**
 - **Trigger Keywords**: `tenant`, `user`, `news`, `notification`, `report`, `audit`, `configuration`, `system`, `admin`
 - **Pattern**: Traditional Controller
-- **Location**: `HealthTech.API/Controllers/{Entity}Controller.cs`
+- **Location**: `Web/Controllers/{Entity}Controller.cs`
 - **Routes**: `/api/{entity}`, `/api/{entity}/{id}`
 - **Reason**: Standard RESTful patterns, easier CRUD operations
 
 **3. Special Operations → Minimal API (FLEXIBLE)**
 - **Trigger Keywords**: `authentication`, `health`, `export`, `import`, `batch`, `bulk`
 - **Pattern**: Minimal API Endpoints
-- **Location**: `HealthTech.API/Endpoints/{Feature}Endpoints.cs`
+- **Location**: `Web/Endpoints/{Feature}Endpoints.cs`
 - **Routes**: `/auth/*`, `/health/*`, `/export/*`
 - **Reason**: Specialized operations with custom logic
 
@@ -319,9 +319,13 @@ using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
 public static class FhirEndpoints
 {
-    public static void MapFhirEndpoints(this WebApplication app)
+    public static IEndpointRouteBuilder MapFhirEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/fhir")
             .WithTags("FHIR")
@@ -519,6 +523,8 @@ public static class FhirEndpoints
         .WithName("ExportFhirBundlePost")
         .WithSummary("Export FHIR resources as a bundle (POST method for complex queries)")
         .WithDescription("Export FHIR resources as a Bundle using POST for complex query parameters");
+
+        return app;
     }
 }
 
@@ -1136,7 +1142,7 @@ public class HealthcareDataAuditService
 
 ### FHIR R4B Structure
 ```
-HealthTech.Domain/
+Domain/
 ├── Entities/
 │   ├── FhirResource.cs               # Base FHIR R4B entity (abstract)
 │   └── {OtherFhirResources}.cs       # Other FHIR resource entities
@@ -1147,8 +1153,8 @@ HealthTech.Domain/
     ├── IFhirSecurityService.cs       # FHIR security service
     └── IFhirAuditService.cs          # FHIR audit service
 
-HealthTech.Application/
-├── FhirResources/
+Application/
+├── Fhir/
 │   ├── Commands/
 │   │   ├── CreateFhirResource/
 │   │   │   ├── CreateFhirResourceCommand.cs
@@ -1186,11 +1192,11 @@ HealthTech.Application/
         ├── FhirSecurityService.cs    # FHIR security service
         └── FhirAuditService.cs       # FHIR audit service
 
-HealthTech.API/
+Web/
 ├── Endpoints/
 │   ├── FhirEndpoints.cs              # FHIR standard endpoints (generic)
 │   └── {CustomEndpoints}.cs          # Custom non-FHIR endpoints
-└── Middleware/
+└── Infrastructure/
     ├── FhirExceptionMiddleware.cs    # FHIR error handling
     └── FhirSecurityMiddleware.cs     # FHIR security middleware
 ```
