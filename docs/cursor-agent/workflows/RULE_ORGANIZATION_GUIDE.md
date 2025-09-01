@@ -9,17 +9,17 @@ This guide explains the organization and responsibility division between differe
 
 | File | Primary Responsibility | Secondary Responsibility | When to Use |
 |------|----------------------|-------------------------|-------------|
-| `API_PATTERN_RULE.md` | **API Pattern Decision** | Quick user context reference | **ALWAYS** for API development |
+| `API_PATTERN_RULE.md` | **API Pattern Decision** | Quick reference templates | **ALWAYS** for API development |
 | `CURSOR_AI_RULES.md` | **Core Development Rules** | Workflow guidelines | Development setup and principles |
 | `USER_HANDLING_GUIDE.md` | **User Context Patterns** | IUser implementation | User-related implementation |
 | `SECURITY_GUIDE.md` | **Authentication & Authorization** | Security compliance | Security implementation |
+| `CODE_PATTERNS.md` | **Detailed Implementation Templates** | Code patterns and best practices | Implementation details |
 
 ### **Specialized Reference Files**
 
 | File | Responsibility | When to Reference |
 |------|----------------|-------------------|
 | `HEALTHCARE_DATA_PATTERN_REFERENCE.md` | FHIR compliance | FHIR resource implementation |
-| `CODE_PATTERNS.md` | Implementation patterns | Complex feature development |
 | `FIELD_ORGANIZATION_PATTERN.md` | Entity structure | Entity design |
 | `ARCHITECTURE_GUIDE.md` | Clean architecture | System design |
 | `DATABASE_GUIDE.md` | Database patterns | Data access implementation |

@@ -1,10 +1,10 @@
-# FHIRAI - Code Patterns Guide
+# FHIRAI - Hướng dẫn Mẫu Code (Code Patterns Guide)
 
-## 📋 Overview
+## 1. Tổng quan (Overview)
 
-FHIRAI sử dụng **Clean Architecture** với **MediatR**, **AutoMapper**, và **Entity Framework Core**. Template này cung cấp patterns chuẩn cho việc triển khai features một cách nhất quán và hiệu quả.
+FHIRAI sử dụng **Clean Architecture** với **MediatR**, **AutoMapper**, và **Entity Framework Core**. Tài liệu này cung cấp các mẫu (patterns) chuẩn để triển khai tính năng một cách nhất quán và hiệu quả.
 
-### 🏗️ Architecture Layers
+### 1.1. Các Tầng Kiến trúc (Architecture Layers)
 ```
 Domain Layer (Entities, Value Objects, Domain Events)
     ↑
@@ -15,15 +15,19 @@ Infrastructure Layer (DbContext, Repositories, External Services)
 Web Layer (Endpoints, Controllers, Middleware)
 ```
 
-## 🏷️ Naming Conventions
+---
 
-### C# Naming Standards
-- **PascalCase**: Classes, methods, properties, namespaces, constants
-- **camelCase**: Variables, parameters, local variables, private fields
-- **UPPER_CASE**: Constants, static readonly fields, enum values
-- **snake_case**: PostgreSQL database objects, configuration keys
+## 2. Cấu trúc & Quy ước (Structure & Conventions)
 
-### File Structure Patterns
+### 2.1. Quy ước Đặt tên (Naming Conventions)
+
+#### C# Naming Standards
+- **PascalCase**: Classes, methods, properties, namespaces, constants.
+- **camelCase**: Variables, parameters, local variables, private fields.
+- **UPPER_CASE**: Constants, static readonly fields, enum values.
+- **snake_case**: PostgreSQL database objects, configuration keys.
+
+### 2.2. Cấu trúc Thư mục (File Structure Patterns)
 ```
 src/
 ├── Application/
@@ -61,19 +65,163 @@ src/
     └── Services/
 ```
 
-## 🔧 Core Implementation Patterns
+---
 
-### 1. Command Pattern (Write Operations)
+## 3. Mẫu Lớp Domain (Domain Layer Patterns)
 
-#### Basic Command (Current FHIRAI Template)
+### 3.1. Mẫu Entity (Entity Patterns)
+
+#### Hướng dẫn Kế thừa Base Entity
+Sử dụng `BaseEntity` cho các thực thể đơn giản và `BaseAuditableEntity` khi cần theo dõi lịch sử thay đổi.
+
+```csharp
+// Dùng BaseEntity cho các thực thể không yêu cầu audit.
+public class SimpleEntity : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    // Kế thừa: Id, DomainEvents, AddDomainEvent(), RemoveDomainEvent(), ClearDomainEvents()
+}
+
+// Dùng BaseAuditableEntity cho các thực thể cần theo dõi audit trail.
+public class AuditableEntity : BaseAuditableEntity
+{
+    public string Name { get; set; } = string.Empty;
+    // Kế thừa: Id, Created, CreatedBy, LastModified, LastModifiedBy, DomainEvents
+    // Các trường audit được tự động điền bởi AuditableEntityInterceptor.
+}
+```
+
+#### Checklist khi Tạo Entity
+```csharp
+public class TodoItem : BaseAuditableEntity
+{
+    // 1. Thuộc tính bắt buộc
+    public int ListId { get; set; }
+    public string? Title { get; set; }
+    
+    // 2. Thuộc tính tùy chọn
+    public string? Note { get; set; }
+    public PriorityLevel Priority { get; set; }
+    public DateTime? Reminder { get; set; }
+    
+    // 3. Thuộc tính điều hướng (Navigation Properties)
+    public TodoList List { get; set; } = null!;
+    
+    // 4. Trường private để đóng gói logic
+    private bool _done;
+    
+    // 5. Thuộc tính public chứa logic nghiệp vụ
+    public bool Done
+    {
+        get => _done;
+        set
+        {
+            if (value && !_done)
+            {
+                AddDomainEvent(new TodoItemCompletedEvent(this));
+            }
+            _done = value;
+        }
+    }
+    
+    // 6. Phương thức chứa logic nghiệp vụ
+    public void MarkComplete()
+    {
+        if (Done) return;
+        Done = true;
+        AddDomainEvent(new TodoItemCompletedEvent(this));
+    }
+
+    // 7. Phương thức kiểm tra (Validation) (Tùy chọn)
+    public bool IsValid()
+    {
+        return !string.IsNullOrEmpty(Title) && ListId > 0;
+    }
+}
+```
+
+### 3.2. Mẫu Cấu hình Entity (Entity Configuration Pattern)
+Sử dụng `IEntityTypeConfiguration` để định nghĩa cấu trúc của entity trong database.
+
+```csharp
+// src/Infrastructure/Data/Configurations/TodoItemConfiguration.cs
+public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
+{
+    public void Configure(EntityTypeBuilder<TodoItem> builder)
+    {
+        // Cấu hình bảng
+        builder.ToTable("TodoItems");
+        
+        // Khóa chính
+        builder.HasKey(x => x.Id);
+        
+        // Cấu hình thuộc tính
+        builder.Property(x => x.Title)
+            .HasMaxLength(200)
+            .IsRequired();
+            
+        // Cấu hình mối quan hệ
+        builder.HasOne(x => x.List)
+            .WithMany(x => x.Items)
+            .HasForeignKey(x => x.ListId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        // Cấu hình chỉ mục (Indexes)
+        builder.HasIndex(x => x.ListId);
+    }
+}
+```
+
+### 3.3. Mẫu Sự kiện Domain (Domain Event Pattern)
+Sử dụng Domain Events để xử lý các tác vụ phụ (side effects) sau khi một hành động trong domain hoàn tất.
+
+#### Định nghĩa Domain Event
+```csharp
+public class TodoItemCompletedEvent : BaseEvent
+{
+    public TodoItemCompletedEvent(TodoItem item)
+    {
+        Item = item;
+    }
+
+    public TodoItem Item { get; }
+}
+```
+
+#### Xử lý Domain Event (Event Handler)
+```csharp
+public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemCompletedEvent>
+{
+    private readonly ILogger<TodoItemCompletedEventHandler> _logger;
+
+    public TodoItemCompletedEventHandler(ILogger<TodoItemCompletedEventHandler> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task Handle(TodoItemCompletedEvent notification, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("FHIRAI Domain: TodoItem {Id} was completed", notification.Item.Id);
+        
+        // Xử lý các tác vụ phụ ở đây (ví dụ: gửi thông báo, cập nhật thống kê)
+        await Task.CompletedTask;
+    }
+}
+```
+
+---
+
+## 4. Mẫu Lớp Ứng dụng (Application Layer Patterns)
+
+### 4.1. Command Pattern (Thao tác Ghi - Write Operations)
+
+#### Command Cơ bản
 ```csharp
 // Command
 public record CreateTodoItemCommand : IRequest<int>
 {
     public int ListId { get; init; }
     public string? Title { get; init; }
-    public PriorityLevel Priority { get; init; } = PriorityLevel.Medium;
-    public string? Note { get; init; }
 }
 
 // Handler
@@ -88,14 +236,7 @@ public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemComman
 
     public async Task<int> Handle(CreateTodoItemCommand request, CancellationToken cancellationToken)
     {
-        var entity = new TodoItem
-        {
-            ListId = request.ListId,
-            Title = request.Title,
-            Priority = request.Priority,
-            Note = request.Note,
-            Done = false
-        };
+        var entity = new TodoItem { ListId = request.ListId, Title = request.Title };
 
         entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
         _context.TodoItems.Add(entity);
@@ -110,40 +251,30 @@ public class CreateTodoItemCommandValidator : AbstractValidator<CreateTodoItemCo
 {
     public CreateTodoItemCommandValidator()
     {
-        RuleFor(v => v.Title)
-            .NotEmpty()
-            .MaximumLength(200)
-            .WithMessage("Title must not exceed 200 characters.");
-
-        RuleFor(v => v.ListId)
-            .GreaterThan(0)
-            .WithMessage("ListId must be greater than 0.");
+        RuleFor(v => v.Title).NotEmpty().MaximumLength(200);
+        RuleFor(v => v.ListId).GreaterThan(0);
     }
 }
 ```
 
-#### Enhanced Command with Base Classes (Enterprise)
+#### Command Nâng cao (với Base Classes)
 ```csharp
-// Base Request for enterprise features
+// Base Request cho các tính năng enterprise
 public abstract record BaseRequest<TResponse> : IRequest<TResponse>
 {
     public Guid RequestId { get; init; } = Guid.NewGuid();
-    public DateTime RequestedAt { get; init; } = DateTime.UtcNow;
     public string? CorrelationId { get; init; }
     public string? UserId { get; init; }
-    public string? TenantId { get; init; }
 }
 
-// Enhanced Command
+// Command kế thừa từ BaseRequest
 public record CreateTodoItemCommand : BaseRequest<int>
 {
     public int ListId { get; init; }
     public string? Title { get; init; }
-    public PriorityLevel Priority { get; init; } = PriorityLevel.Medium;
-    public string? Note { get; init; }
 }
 
-// Enhanced Handler with error handling
+// Handler nâng cao với logging và error handling
 public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemCommand, int>
 {
     private readonly IApplicationDbContext _context;
@@ -159,20 +290,10 @@ public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemComman
     {
         try
         {
-            var entity = new TodoItem
-            {
-                ListId = request.ListId,
-                Title = request.Title,
-                Priority = request.Priority,
-                Note = request.Note,
-                Done = false
-            };
-
-            entity.AddDomainEvent(new TodoItemCreatedEvent(entity));
+            var entity = new TodoItem { ListId = request.ListId, Title = request.Title };
             _context.TodoItems.Add(entity);
             await _context.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation("Created TodoItem {Id} for List {ListId}", entity.Id, request.ListId);
+            _logger.LogInformation("Created TodoItem {Id}", entity.Id);
             return entity.Id;
         }
         catch (Exception ex)
@@ -184,9 +305,9 @@ public class CreateTodoItemCommandHandler : IRequestHandler<CreateTodoItemComman
 }
 ```
 
-### 2. Query Pattern (Read Operations)
+### 4.2. Query Pattern (Thao tác Đọc - Read Operations)
 
-#### Basic Query (Current FHIRAI Template)
+#### Query Cơ bản
 ```csharp
 // Query
 public record GetTodoItemsWithPaginationQuery : IRequest<PaginatedList<TodoItemBriefDto>>
@@ -209,34 +330,30 @@ public class GetTodoItemsWithPaginationQueryHandler
         _mapper = mapper;
     }
 
-    public async Task<PaginatedList<TodoItemBriefDto>> Handle(
-        GetTodoItemsWithPaginationQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<TodoItemBriefDto>> Handle(GetTodoItemsWithPaginationQuery request, CancellationToken ct)
     {
         return await _context.TodoItems
             .Where(x => x.ListId == request.ListId)
             .OrderBy(x => x.Title)
             .ProjectTo<TodoItemBriefDto>(_mapper.ConfigurationProvider)
-            .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
+            .PaginatedListAsync(request.PageNumber, request.PageSize, ct);
     }
 }
 ```
 
-#### Enhanced Query with Advanced Filtering
+#### Query Nâng cao (với Filtering)
 ```csharp
-// Enhanced Query with filters
+// Query với các tham số lọc
 public record GetTodoItemsQuery : IRequest<PaginatedList<TodoItemBriefDto>>
 {
     public int ListId { get; init; }
     public int PageNumber { get; init; } = 1;
     public int PageSize { get; init; } = 10;
     public string? SearchString { get; init; }
-    public PriorityLevel? Priority { get; init; }
     public bool? Done { get; init; }
-    public DateTime? CreatedFrom { get; init; }
-    public DateTime? CreatedTo { get; init; }
 }
 
-// Enhanced Handler with filtering
+// Handler với logic lọc động
 public class GetTodoItemsQueryHandler 
     : IRequestHandler<GetTodoItemsQuery, PaginatedList<TodoItemBriefDto>>
 {
@@ -249,104 +366,153 @@ public class GetTodoItemsQueryHandler
         _mapper = mapper;
     }
 
-    public async Task<PaginatedList<TodoItemBriefDto>> Handle(
-        GetTodoItemsQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedList<TodoItemBriefDto>> Handle(GetTodoItemsQuery request, CancellationToken ct)
     {
-        var query = _context.TodoItems
-            .Where(x => x.ListId == request.ListId);
+        var query = _context.TodoItems.Where(x => x.ListId == request.ListId);
 
-        // Apply search filter
         if (!string.IsNullOrEmpty(request.SearchString))
         {
             query = query.Where(x => x.Title.Contains(request.SearchString));
         }
 
-        // Apply priority filter
-        if (request.Priority.HasValue)
-        {
-            query = query.Where(x => x.Priority == request.Priority.Value);
-        }
-
-        // Apply done filter
         if (request.Done.HasValue)
         {
             query = query.Where(x => x.Done == request.Done.Value);
         }
 
-        // Apply date range filter
-        if (request.CreatedFrom.HasValue)
-        {
-            query = query.Where(x => x.Created >= request.CreatedFrom.Value);
-        }
-
-        if (request.CreatedTo.HasValue)
-        {
-            query = query.Where(x => x.Created <= request.CreatedTo.Value);
-        }
-
         return await query
             .OrderBy(x => x.Title)
             .ProjectTo<TodoItemBriefDto>(_mapper.ConfigurationProvider)
-            .PaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
+            .PaginatedListAsync(request.PageNumber, request.PageSize, ct);
     }
 }
 ```
 
-### 3. Paging Patterns
+### 4.3. Mẫu GetById/GetDetail (Chi tiết đối tượng)
 
-#### Current FHIRAI Pagination (Simple)
+#### Query GetById Cơ bản
 ```csharp
-// Using existing PaginatedList from template
-public class PaginatedList<T> : List<T>
+// Query
+public record GetTodoItemByIdQuery : IRequest<TodoItemDetailDto?>
 {
-    public int PageIndex { get; }
+    public int Id { get; init; }
+}
+
+// Handler
+public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, TodoItemDetailDto?>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+
+    public async Task<TodoItemDetailDto?> Handle(GetTodoItemByIdQuery request, CancellationToken ct)
+    {
+        var todoItem = await _context.TodoItems
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+        if (todoItem == null) return null;
+
+        return _mapper.Map<TodoItemDetailDto>(todoItem);
+    }
+}
+```
+
+#### Query GetById Nâng cao (với Result Pattern và Caching)
+```csharp
+// Query
+public record GetTodoItemByIdQuery : IRequest<Result<TodoItemDetailDto>>
+{
+    public int Id { get; init; }
+}
+
+// Handler
+public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, Result<TodoItemDetailDto>>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
+    private readonly ICacheService _cacheService;
+    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
+
+    public async Task<Result<TodoItemDetailDto>> Handle(GetTodoItemByIdQuery request, CancellationToken ct)
+    {
+        try
+        {
+            var cacheKey = $"TodoItem:{request.Id}";
+            var cachedResult = await _cacheService.GetAsync<TodoItemDetailDto>(cacheKey, ct);
+            
+            if (cachedResult != null)
+            {
+                _logger.LogInformation("Retrieved TodoItem {Id} from cache", request.Id);
+                return Result<TodoItemDetailDto>.Success(cachedResult);
+            }
+
+            var todoItem = await _context.TodoItems
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+
+            if (todoItem == null)
+            {
+                return Result<TodoItemDetailDto>.Failure("TodoItem not found.");
+            }
+
+            var dto = _mapper.Map<TodoItemDetailDto>(todoItem);
+            await _cacheService.SetAsync(cacheKey, dto, TimeSpan.FromMinutes(5), ct);
+            
+            return Result<TodoItemDetailDto>.Success(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving TodoItem with Id {Id}", request.Id);
+            return Result<TodoItemDetailDto>.Failure("An error occurred.");
+        }
+    }
+}
+```
+
+### 4.4. Mẫu Phân trang (Paging Patterns)
+
+#### Phân trang Cơ bản
+```csharp
+// Lớp PaginatedList có sẵn trong template
+public class PaginatedList<T>
+{
+    public List<T> Items { get; }
+    public int PageNumber { get; }
     public int TotalPages { get; }
     public int TotalCount { get; }
 
-    public PaginatedList(List<T> items, int count, int pageIndex, int pageSize)
+    public PaginatedList(List<T> items, int count, int pageNumber, int pageSize)
     {
-        PageIndex = pageIndex;
-        TotalPages = (int)Math.Ceiling(count / (double)pageSize);
-        TotalCount = count;
-        AddRange(items);
+        // ... implementation ...
     }
 
-    public bool HasPreviousPage => PageIndex > 1;
-    public bool HasNextPage => PageIndex < TotalPages;
-
-    public static async Task<PaginatedList<T>> CreateAsync(
-        IQueryable<T> source, int pageIndex, int pageSize)
+    public static async Task<PaginatedList<T>> CreateAsync(IQueryable<T> source, int pageNumber, int pageSize)
     {
-        var count = await source.CountAsync();
-        var items = await source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToListAsync();
-        return new PaginatedList<T>(items, count, pageIndex, pageSize);
+        // ... implementation ...
     }
 }
 
-// Extension method for easy pagination
+// Extension method để dễ sử dụng
 public static class MappingExtensions
 {
     public static Task<PaginatedList<TDestination>> PaginatedListAsync<TDestination>(
-        this IQueryable<TDestination> queryable, int pageNumber, int pageSize, 
-        CancellationToken cancellationToken = default) where TDestination : class
+        this IQueryable<TDestination> queryable, int pageNumber, int pageSize)
         => PaginatedList<TDestination>.CreateAsync(queryable.AsNoTracking(), pageNumber, pageSize);
 }
 ```
 
-#### Enhanced Paging with Base Classes (Enterprise)
+#### Phân trang Nâng cao (với Base Classes)
 ```csharp
-// Base Response for consistent error handling
-public abstract record BaseResponse
+// Base Request cho phân trang
+public abstract record BasePagedRequest<TResponse> : BaseRequest<TResponse>
 {
-    public bool IsSuccess { get; init; }
-    public string? Message { get; init; }
-    public List<string> Errors { get; init; } = new();
-    public Guid RequestId { get; init; }
-    public DateTime RespondedAt { get; init; } = DateTime.UtcNow;
-    public int StatusCode { get; init; } = 200;
+    public int PageNumber { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
+    public string? SortBy { get; init; }
+    public string SortOrder { get; init; } = "asc";
 }
 
-// Enhanced Paged Response
+// Base Response cho dữ liệu phân trang
 public record PagedResponse<T> : BaseResponse
 {
     public List<T> Items { get; init; } = new();
@@ -354,289 +520,36 @@ public record PagedResponse<T> : BaseResponse
     public int PageNumber { get; init; }
     public int PageSize { get; init; }
     public int TotalPages { get; init; }
-    public bool HasPreviousPage { get; init; }
-    public bool HasNextPage { get; init; }
-}
-
-// Base Paged Request
-public abstract record BasePagedRequest<TResponse> : BaseRequest<TResponse>
-{
-    public int PageNumber { get; init; } = 1;
-    public int PageSize { get; init; } = 10;
-    public string? SortBy { get; init; }
-    public string SortOrder { get; init; } = "asc";
-    public string? SearchTerm { get; init; }
-    public Dictionary<string, object>? Filters { get; init; }
 }
 ```
 
-### 4. Endpoint Patterns
-
-#### Current FHIRAI Endpoints (Minimal APIs)
-```csharp
-public class TodoItems : EndpointGroupBase
-{
-    public override void Map(RouteGroupBuilder groupBuilder)
-    {
-        groupBuilder.MapGet(GetTodoItemsWithPagination).RequireAuthorization();
-        groupBuilder.MapPost(CreateTodoItem).RequireAuthorization();
-        groupBuilder.MapPut(UpdateTodoItem, "{id}").RequireAuthorization();
-        groupBuilder.MapDelete(DeleteTodoItem, "{id}").RequireAuthorization();
-    }
-
-    public async Task<Ok<PaginatedList<TodoItemBriefDto>>> GetTodoItemsWithPagination(
-        ISender sender, [AsParameters] GetTodoItemsWithPaginationQuery query)
-    {
-        var result = await sender.Send(query);
-        return TypedResults.Ok(result);
-    }
-
-    public async Task<Created<int>> CreateTodoItem(ISender sender, CreateTodoItemCommand command)
-    {
-        var id = await sender.Send(command);
-        return TypedResults.Created($"/{nameof(TodoItems)}/{id}", id);
-    }
-
-    public async Task<Results<NoContent, BadRequest>> UpdateTodoItem(
-        ISender sender, int id, UpdateTodoItemCommand command)
-    {
-        if (id != command.Id) return TypedResults.BadRequest();
-        await sender.Send(command);
-        return TypedResults.NoContent();
-    }
-
-    public async Task<NoContent> DeleteTodoItem(ISender sender, int id)
-    {
-        await sender.Send(new DeleteTodoItemCommand(id));
-        return TypedResults.NoContent();
-    }
-}
-```
-
-### 5. Entity Patterns
-
-#### Base Entity Inheritance Guide
-
-##### When to Use BaseEntity vs BaseAuditableEntity
+### 4.5. Mẫu DTO (Data Transfer Objects)
+Sử dụng DTOs để định hình dữ liệu trả về cho client.
 
 ```csharp
-// Use BaseEntity for simple entities without audit requirements
-public class SimpleEntity : BaseEntity
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    
-    // Inherits: Id, DomainEvents, AddDomainEvent(), RemoveDomainEvent(), ClearDomainEvents()
-}
-
-// Use BaseAuditableEntity for entities requiring audit trail
-public class AuditableEntity : BaseAuditableEntity
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    
-    // Inherits: Id, Created, CreatedBy, LastModified, LastModifiedBy, DomainEvents
-    // Auto-populated by AuditableEntityInterceptor
-}
-```
-
-##### Entity Creation Checklist
-
-```csharp
-public class TodoItem : BaseAuditableEntity
-{
-    // 1. Required Properties
-    public int ListId { get; set; }
-    public string? Title { get; set; }
-    
-    // 2. Optional Properties
-    public string? Note { get; set; }
-    public PriorityLevel Priority { get; set; }
-    public DateTime? Reminder { get; set; }
-    
-    // 3. Navigation Properties
-    public TodoList List { get; set; } = null!;
-    
-    // 4. Private Fields for Encapsulation
-    private bool _done;
-    
-    // 5. Public Properties with Business Logic
-    public bool Done
-    {
-        get => _done;
-        set
-        {
-            if (value && !_done)
-            {
-                AddDomainEvent(new TodoItemCompletedEvent(this));
-            }
-            _done = value;
-        }
-    }
-    
-    // 6. Business Logic Methods
-    public void MarkComplete()
-    {
-        if (Done) return;
-        
-        Done = true;
-        AddDomainEvent(new TodoItemCompletedEvent(this));
-    }
-
-    public void MarkIncomplete()
-    {
-        if (!Done) return;
-        
-        Done = false;
-        AddDomainEvent(new TodoItemIncompleteEvent(this));
-    }
-
-    public void UpdatePriority(PriorityLevel newPriority)
-    {
-        if (Priority == newPriority) return;
-        
-        var oldPriority = Priority;
-        Priority = newPriority;
-        AddDomainEvent(new TodoItemPriorityChangedEvent(this, oldPriority, newPriority));
-    }
-    
-    // 7. Validation Methods (Optional)
-    public bool IsValid()
-    {
-        return !string.IsNullOrEmpty(Title) && ListId > 0;
-    }
-}
-```
-
-##### Entity Configuration Pattern
-
-```csharp
-// src/Infrastructure/Data/Configurations/TodoItemConfiguration.cs
-public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
-{
-    public void Configure(EntityTypeBuilder<TodoItem> builder)
-    {
-        // Table configuration
-        builder.ToTable("TodoItems");
-        
-        // Primary key
-        builder.HasKey(x => x.Id);
-        
-        // Properties configuration
-        builder.Property(x => x.Title)
-            .HasMaxLength(200)
-            .IsRequired();
-            
-        builder.Property(x => x.Note)
-            .HasMaxLength(1000);
-            
-        builder.Property(x => x.Priority)
-            .HasConversion<string>()
-            .HasMaxLength(20);
-            
-        // Relationships
-        builder.HasOne(x => x.List)
-            .WithMany(x => x.Items)
-            .HasForeignKey(x => x.ListId)
-            .OnDelete(DeleteBehavior.Cascade);
-            
-        // Indexes
-        builder.HasIndex(x => x.ListId);
-        builder.HasIndex(x => x.Done);
-        builder.HasIndex(x => x.Priority);
-        
-        // Query filters (for soft delete if implemented)
-        // builder.HasQueryFilter(x => !x.IsDeleted);
-    }
-}
-```
-
-##### Domain Event Pattern
-
-```csharp
-// Domain Event
-public class TodoItemCompletedEvent : BaseEvent
-{
-    public TodoItemCompletedEvent(TodoItem item)
-    {
-        Item = item;
-    }
-
-    public TodoItem Item { get; }
-}
-
-// Event Handler
-public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemCompletedEvent>
-{
-    private readonly ILogger<TodoItemCompletedEventHandler> _logger;
-
-    public TodoItemCompletedEventHandler(ILogger<TodoItemCompletedEventHandler> logger)
-    {
-        _logger = logger;
-    }
-
-    public async Task Handle(TodoItemCompletedEvent notification, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("FHIRAI Domain: TodoItem {Id} was completed", notification.Item.Id);
-        
-        // Handle side effects here
-        // e.g., send notifications, update statistics, etc.
-        
-        await Task.CompletedTask;
-    }
-}
-```
-
-### 6. DTO Patterns
-
-#### Request/Response DTOs
-```csharp
-// Request DTOs
-public record CreateTodoItemRequest
-{
-    public int ListId { get; init; }
-    public string? Title { get; init; }
-    public PriorityLevel Priority { get; init; } = PriorityLevel.Medium;
-    public string? Note { get; init; }
-}
-
-public record UpdateTodoItemRequest
-{
-    public int Id { get; init; }
-    public string? Title { get; init; }
-    public bool Done { get; init; }
-    public PriorityLevel Priority { get; init; }
-    public string? Note { get; init; }
-}
-
-// Response DTOs
+// DTO cho danh sách (ít chi tiết)
 public record TodoItemBriefDto
 {
     public int Id { get; init; }
-    public int ListId { get; init; }
     public string? Title { get; init; }
     public bool Done { get; init; }
-    public PriorityLevel Priority { get; init; }
 }
 
+// DTO cho chi tiết (đầy đủ thông tin)
 public record TodoItemDetailDto
 {
     public int Id { get; init; }
-    public int ListId { get; init; }
     public string? Title { get; init; }
     public bool Done { get; init; }
-    public PriorityLevel Priority { get; init; }
     public string? Note { get; init; }
     public DateTime Created { get; init; }
     public string? CreatedBy { get; init; }
-    public DateTime? LastModified { get; init; }
-    public string? LastModifiedBy { get; init; }
 }
 ```
 
-### 7. AutoMapper Patterns
+### 4.6. Mẫu AutoMapper (AutoMapper Patterns)
+Sử dụng `Profile` để cấu hình mapping giữa các object.
 
-#### Profile Configuration
 ```csharp
 public class TodoItemProfile : Profile
 {
@@ -645,171 +558,147 @@ public class TodoItemProfile : Profile
         CreateMap<TodoItem, TodoItemBriefDto>();
         CreateMap<TodoItem, TodoItemDetailDto>();
         CreateMap<CreateTodoItemCommand, TodoItem>();
-        CreateMap<UpdateTodoItemCommand, TodoItem>();
     }
 }
 ```
 
-### 8. Domain Event Patterns
+---
 
-#### Domain Event
+## 5. Mẫu Lớp Web & API (Web & API Layer Patterns)
+
+### 5.1. Mẫu Endpoint (Minimal APIs)
+Sử dụng Minimal APIs cho các endpoint đơn giản, nhanh gọn.
+
 ```csharp
-public class TodoItemCompletedEvent : BaseEvent
+public class TodoItems : EndpointGroupBase
 {
-    public TodoItemCompletedEvent(TodoItem item)
+    public override void Map(RouteGroupBuilder groupBuilder)
     {
-        Item = item;
+        groupBuilder.MapGet(GetTodoItemsWithPagination);
+        groupBuilder.MapPost(CreateTodoItem);
+        groupBuilder.MapPut(UpdateTodoItem, "{id}");
+        groupBuilder.MapDelete(DeleteTodoItem, "{id}");
     }
 
-    public TodoItem Item { get; }
+    public async Task<PaginatedList<TodoItemBriefDto>> GetTodoItemsWithPagination(
+        ISender sender, [AsParameters] GetTodoItemsWithPaginationQuery query)
+    {
+        return await sender.Send(query);
+    }
+
+    public async Task<int> CreateTodoItem(ISender sender, CreateTodoItemCommand command)
+    {
+        return await sender.Send(command);
+    }
+    
+    // ... other methods
 }
 ```
 
-#### Event Handler
-```csharp
-public class TodoItemCompletedEventHandler : INotificationHandler<TodoItemCompletedEvent>
-{
-    private readonly ILogger<TodoItemCompletedEventHandler> _logger;
+### 5.2. Mẫu Triển khai API (API Implementation Templates)
 
-    public TodoItemCompletedEventHandler(ILogger<TodoItemCompletedEventHandler> logger)
+#### Mẫu FHIR Endpoints (BẮT BUỘC)
+```csharp
+public class FhirEndpoints : EndpointGroupBase
+{
+    public override string? GroupName => "fhir";
+    
+    public override void Map(RouteGroupBuilder groupBuilder)
     {
+        groupBuilder.MapGet(GetResource, "{resourceType}")
+            .WithName("GetFhirResource")
+            .WithSummary("Get FHIR resources by type");
+            
+        groupBuilder.MapPost(CreateResource, "{resourceType}")
+            .WithName("CreateFhirResource")
+            .WithSummary("Create new FHIR resource");
+    }
+    
+    public async Task<Results<Ok<Bundle>, NotFound, BadRequest<OperationOutcome>>> GetResource(
+        ISender sender, 
+        string resourceType, 
+        [AsParameters] GetFhirResourceQuery query)
+    {
+        try
+        {
+            var result = await sender.Send(query);
+            return TypedResults.Ok(result);
+        }
+        catch (NotFoundException)
+        {
+            return TypedResults.NotFound();
+        }
+        catch (ValidationException ex)
+        {
+            var operationOutcome = new OperationOutcome { /* ... */ };
+            return TypedResults.BadRequest(operationOutcome);
+        }
+    }
+}
+```
+
+#### Mẫu Business Controllers (KHUYẾN KHÍCH)
+Sử dụng `ApiController` cho các logic nghiệp vụ phức tạp hơn.
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class EntityController : ControllerBase
+{
+    private readonly ISender _sender;
+    private readonly ILogger<EntityController> _logger;
+
+    public EntityController(ISender sender, ILogger<EntityController> logger)
+    {
+        _sender = sender;
         _logger = logger;
     }
 
-    public async Task Handle(TodoItemCompletedEvent notification, CancellationToken cancellationToken)
-    {
-        _logger.LogInformation("FHIRAI Domain: TodoItem {Id} was completed", notification.Item.Id);
-        
-        // Handle side effects here
-        // e.g., send notifications, update statistics, etc.
-        
-        await Task.CompletedTask;
-    }
-}
-```
-
-## 🔧 Enhanced Implementation Patterns
-
-### 9. GetById/GetDetail Pattern
-
-#### Basic GetById Query
-```csharp
-// Query
-public record GetTodoItemByIdQuery : IRequest<TodoItemDetailDto?>
-{
-    public int Id { get; init; }
-}
-
-// Handler with Error Handling
-public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, TodoItemDetailDto?>
-{
-    private readonly IApplicationDbContext _context;
-    private readonly IMapper _mapper;
-    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
-    private readonly ICurrentUserService _currentUserService;
-
-    public async Task<TodoItemDetailDto?> Handle(
-        GetTodoItemByIdQuery request, CancellationToken cancellationToken)
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedList<EntityDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PaginatedList<EntityDto>>> GetEntities([FromQuery] GetEntitiesQuery query)
     {
         try
         {
-            _logger.LogInformation("Getting TodoItem with Id {Id} for user {UserId}", 
-                request.Id, _currentUserService.UserId);
-
-            var todoItem = await _context.TodoItems
-                .Include(x => x.List)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-
-            if (todoItem == null)
-            {
-                _logger.LogWarning("TodoItem with Id {Id} not found", request.Id);
-                return null;
-            }
-
-            // Authorization check
-            if (!await HasAccessToTodoItem(todoItem, cancellationToken))
-            {
-                _logger.LogWarning("User {UserId} does not have access to TodoItem {Id}", 
-                    _currentUserService.UserId, request.Id);
-                throw new ForbiddenAccessException();
-            }
-
-            var dto = _mapper.Map<TodoItemDetailDto>(todoItem);
-            
-            _logger.LogInformation("Successfully retrieved TodoItem {Id}", request.Id);
-            return dto;
+            var result = await _sender.Send(query);
+            return Ok(result);
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(new { errors = ex.Errors });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving TodoItem with Id {Id}", request.Id);
-            throw;
+            _logger.LogError(ex, "Error retrieving entities");
+            return StatusCode(500, "An error occurred.");
         }
-    }
-
-    private async Task<bool> HasAccessToTodoItem(TodoItem todoItem, CancellationToken cancellationToken)
-    {
-        var userId = _currentUserService.UserId;
-        var userRoles = _currentUserService.Roles;
-
-        if (userRoles.Contains("Admin")) return true;
-
-        // Check ownership
-        var todoList = await _context.TodoLists
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == todoItem.ListId, cancellationToken);
-
-        return todoList?.CreatedBy == userId;
-    }
-}
-
-// Validator
-public class GetTodoItemByIdQueryValidator : AbstractValidator<GetTodoItemByIdQuery>
-{
-    public GetTodoItemByIdQueryValidator()
-    {
-        RuleFor(v => v.Id)
-            .GreaterThan(0)
-            .WithMessage("Id must be greater than 0.");
     }
 }
 ```
 
-#### Enhanced GetById with Result Pattern
+#### Mẫu Special Operations (LINH HOẠT)
+Dùng cho các endpoint đặc thù không theo chuẩn CRUD.
 ```csharp
-// Enhanced Query with Result pattern
-public record GetTodoItemByIdQuery : IRequest<Result<TodoItemDetailDto>>
+public class FeatureEndpoints : EndpointGroupBase
 {
-    public int Id { get; init; }
-}
-
-// Enhanced Handler with proper error handling
-public class GetTodoItemByIdQueryHandler : IRequestHandler<GetTodoItemByIdQuery, Result<TodoItemDetailDto>>
-{
-    private readonly IApplicationDbContext _context;
-    private readonly IMapper _mapper;
-    private readonly ILogger<GetTodoItemByIdQueryHandler> _logger;
-    private readonly ICurrentUserService _currentUserService;
-    private readonly ICacheService _cacheService;
-
-    public async Task<Result<TodoItemDetailDto>> Handle(
-        GetTodoItemByIdQuery request, CancellationToken cancellationToken)
+    public override string? GroupName => "feature";
+    
+    public override void Map(RouteGroupBuilder groupBuilder)
     {
-        try
-        {
-            // Try to get from cache first
-            var cacheKey = $"TodoItem:{request.Id}:{_currentUserService.UserId}";
-            var cachedResult = await _cacheService.GetAsync<TodoItemDetailDto>(cacheKey, cancellationToken);
-            
-            if (cachedResult != null)
-            {
-                _logger.LogInformation("Retrieved TodoItem {Id} from cache", request.Id);
-                return Result<TodoItemDetailDto>.Success(cachedResult);
-            }
-
-            _logger.LogInformation("Getting TodoItem with Id {Id} for user {UserId}", 
-                request.Id, _currentUserService.UserId);
-
+        groupBuilder.MapGet(GetStatus, "status")
+            .WithName("GetFeatureStatus")
+            .WithTags("Feature");
+    }
+    
+    public async Task<Ok<FeatureStatus>> GetStatus(ILogger<FeatureEndpoints> logger)
+    {
+        logger.LogInformation("Getting feature status");
+        var status = new FeatureStatus { IsHealthy = true, Timestamp = DateTime.UtcNow };
+        return TypedResults.Ok(status);
+    }
+}
+```
             var todoItem = await _context.TodoItems
                 .Include(x => x.List)
                 .AsNoTracking()
