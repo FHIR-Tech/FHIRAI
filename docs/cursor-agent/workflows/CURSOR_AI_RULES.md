@@ -63,6 +63,10 @@ Always respond with the standardized format from optimized rule:
 
 ## 📚 **REFERENCE FILES (ONLY WHEN NEEDED)**
 
+### **For User & Security Implementation:**
+- **User Handling**: `USER_HANDLING_GUIDE.md` - User context patterns and IUser implementation
+- **Security Guide**: `SECURITY_GUIDE.md` - Authentication, authorization, and security compliance
+
 ### **For FHIR Implementation:**
 - **Healthcare Data Patterns**: `HEALTHCARE_DATA_PATTERN_REFERENCE.md` - FHIR compliance requirements
 
@@ -72,14 +76,14 @@ Always respond with the standardized format from optimized rule:
 
 ### **For Architecture:**
 - **Architecture Guide**: `ARCHITECTURE_GUIDE.md` - Clean architecture patterns
-- **Security Guide**: `SECURITY_GUIDE.md` - Security and compliance requirements
+
+### **For Database:**
 - **Database Guide**: `DATABASE_GUIDE.md` - Database patterns and optimization
 
 ### **For Development Workflow:**
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
-- **User Handling**: `USER_HANDLING_GUIDE.md` - User context patterns and best practices
 
 ## 🎯 **KEY PRINCIPLES**
 

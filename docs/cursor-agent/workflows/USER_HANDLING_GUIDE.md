@@ -191,7 +191,9 @@ public async Task<int> Handle(CreateEntityCommand request, CancellationToken can
 
 ### **3. Authorization Patterns (MANDATORY)**
 
-#### **✅ CORRECT: Role-based Authorization**
+**For detailed authorization patterns, see**: `SECURITY_GUIDE.md`
+
+#### **✅ CORRECT: Role-based Authorization (Quick Reference)**
 ```csharp
 private bool CanCreateEntity(string userId, CreateEntityCommand request)
 {
@@ -200,16 +202,16 @@ private bool CanCreateEntity(string userId, CreateEntityCommand request)
     // Admin can do everything
     if (userRoles.Contains("Admin")) return true;
     
-    // Manager can create in their department
-    if (userRoles.Contains("Manager"))
-    {
-        return IsInUserDepartment(userId, request.DepartmentId);
-    }
+    // Manager can create entities
+    if (userRoles.Contains("Manager")) return true;
     
-    // Regular users can only create their own items
+    // Check specific business rules
     return CheckUserOwnership(userId, request);
 }
+```
 
+#### **✅ CORRECT: Policy-based Authorization (Quick Reference)**
+```csharp
 private async Task<bool> CanAccessEntity(string userId, int entityId)
 {
     var userRoles = _user.Roles ?? new List<string>();
@@ -225,30 +227,7 @@ private async Task<bool> CanAccessEntity(string userId, int entityId)
 }
 ```
 
-#### **✅ CORRECT: Policy-based Authorization**
-```csharp
-[Authorize(Policy = "CanManageUsers")]
-public record UpdateUserCommand : IRequest<int>
-{
-    public int UserId { get; init; }
-    public string NewRole { get; init; } = string.Empty;
-}
-
-// In handler
-public async Task<int> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
-{
-    var currentUserId = _user.Id ?? "system";
-    var currentUserRoles = _user.Roles ?? new List<string>();
-    
-    // Additional business logic authorization
-    if (!currentUserRoles.Contains("Admin") && request.UserId.ToString() != currentUserId)
-    {
-        throw new ForbiddenAccessException("Users can only update their own profile");
-    }
-    
-    // Continue with business logic...
-}
-```
+**For comprehensive authorization patterns, see**: `SECURITY_GUIDE.md`
 
 ### **4. Audit Trail Patterns (MANDATORY)**
 
