@@ -315,6 +315,8 @@ public class DataProtectionService : IDataProtectionService
 ```
 
 ### Audit Logging
+
+See `LOGGING_GUIDE.md` for centralized logging policies and patterns.
 ```csharp
 // Base auditable entity
 public abstract class BaseAuditableEntity : BaseEntity
@@ -441,6 +443,7 @@ public class BackupSettings
 - [ ] Failed authentication attempts tracked
 - [ ] Unusual access patterns detected
 - [ ] Regular security audits conducted
+- [ ] Logging follows `LOGGING_GUIDE.md`
 
 ## 🔧 Security Configuration
 

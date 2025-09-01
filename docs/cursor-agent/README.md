@@ -22,6 +22,7 @@ docs/cursor-agent/
 │   ├── DATABASE_GUIDE.md       # Database patterns and optimization
 │   ├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
 │   ├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+│   ├── LOGGING_GUIDE.md            # Centralized logging guide
 │   └── DOCUMENTATION_STRUCTURE.md # AI Navigation Guide
 ├── reports/                     # Implementation reports
 │   └── template_implementation_report.md # Report template

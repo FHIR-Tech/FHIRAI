@@ -955,6 +955,8 @@ public class PerformanceBehaviour<TRequest, TResponse> : IPipelineBehaviour<TReq
 
 ### 14. Comprehensive Logging Patterns
 
+Note: Core logging policies are centralized in `LOGGING_GUIDE.md`. This section provides quick examples only.
+
 #### Logging Behaviour (Request/Response Logging)
 ```csharp
 public class LoggingBehaviour<TRequest> : IRequestPreProcessor<TRequest>

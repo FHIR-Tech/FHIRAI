@@ -77,7 +77,8 @@ public class FeatureEndpoints : EndpointGroupBase
 }
 ```
 
-**For complete templates with error handling, logging, and validation, see**: `CODE_PATTERNS.md`
+**For complete templates with error handling and validation, see**: `CODE_PATTERNS.md`
+**For logging requirements and patterns, see**: `LOGGING_GUIDE.md`
 
 ### **STEP 3: RESPONSE FORMAT (MANDATORY)**
 ```
@@ -151,7 +152,8 @@ az login && azd up
 ## 📚 **REFERENCE FILES (ONLY WHEN NEEDED)**
 
 ### **For Implementation Templates:**
-- **Code Patterns**: `CODE_PATTERNS.md` - **DETAILED** implementation templates with error handling, logging, and validation
+- **Code Patterns**: `CODE_PATTERNS.md` - **DETAILED** implementation templates with error handling and validation
+- **Logging Guide**: `LOGGING_GUIDE.md` - Centralized logging requirements and patterns
 
 ### **For FHIR Implementation:**
 - **Healthcare Data Patterns**: `HEALTHCARE_DATA_PATTERN_REFERENCE.md` - FHIR compliance requirements

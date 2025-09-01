@@ -76,7 +76,7 @@ Cursor AI MUST automatically determine the correct API pattern based on the feat
 
 ### Monitoring & Observability
 - **Audit Trail**: FHIR AuditEvent resources for all data access
-- **Logging**: Structured logging with no PII exposure
+- **Logging**: Structured logging with no PII exposure (see `LOGGING_GUIDE.md`)
 - **Metrics**: Healthcare-specific metrics and KPIs
 - **Health Checks**: FHIR-compliant health check endpoints
 
@@ -1368,6 +1368,8 @@ Based on the [HL7 FHIR HTTP specification](https://hl7.org/fhir/http.html), the 
 2. **Access Control**: Implement role-based access control
 3. **Audit Logging**: Log all healthcare data access
 4. **Data Masking**: Mask sensitive data in logs
+
+Refer to `LOGGING_GUIDE.md` for centralized logging and audit implementation details.
 5. **Consent Management**: Track and enforce patient consent
 6. **Data Classification**: Classify data by sensitivity level
 

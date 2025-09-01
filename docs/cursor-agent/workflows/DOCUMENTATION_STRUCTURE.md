@@ -38,7 +38,8 @@ docs/
 │   ├── workflows/               # AI workflow rules and guidelines
 │   │   ├── CURSOR_AI_RULES.md  # Comprehensive development rules
 │   │   ├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
-│   │   └── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+│   │   ├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
+│   │   └── LOGGING_GUIDE.md            # Centralized logging guide
 │   ├── reports/                 # Implementation reports
 │   │   └── template_implementation_report.md # Report template
 │   ├── logs/                    # Session logs and transcripts
