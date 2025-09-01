@@ -8,5 +8,7 @@ public interface IApplicationDbContext
 
     DbSet<TodoItem> TodoItems { get; }
 
+    DbSet<FhirResource> FhirResources { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

@@ -194,8 +194,8 @@ public static class FhirBundleReferenceHelper
         if (medicationRequest.Requester != null)
             references.Add(medicationRequest.Requester);
         
-        if (medicationRequest.Dispenser != null)
-            references.Add(medicationRequest.Dispenser);
+        if (medicationRequest.Performer != null)
+            references.Add(medicationRequest.Performer);
     }
 
     private static void ExtractDiagnosticReportReferences(DiagnosticReport diagnosticReport, List<ResourceReference> references)

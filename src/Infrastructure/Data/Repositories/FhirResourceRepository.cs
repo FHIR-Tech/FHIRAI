@@ -229,7 +229,7 @@ public class FhirResourceRepository : IFhirResourceRepository
         foreach (var param in searchParameters)
         {
             var jsonPath = $"$.{param.Key}";
-            query = query.Where(r => EF.Functions.JsonContains(r.SearchParameters, $"\"{param.Value}\""));
+            query = query.Where(r => r.SearchParameters != null && EF.Functions.JsonContains(r.SearchParameters, $"\"{param.Value}\""));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

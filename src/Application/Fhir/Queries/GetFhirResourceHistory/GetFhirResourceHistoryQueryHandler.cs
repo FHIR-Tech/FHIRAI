@@ -41,6 +41,7 @@ public class GetFhirResourceHistoryQueryHandler : IRequestHandler<GetFhirResourc
             var versions = await _fhirResourceRepository.GetHistoryAsync(
                 request.ResourceType,
                 request.FhirId,
+                100,
                 cancellationToken);
 
             // Filter deleted versions if not requested

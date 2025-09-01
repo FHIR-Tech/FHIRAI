@@ -129,7 +129,7 @@ public class ExportFhirBundleQueryHandler : IRequestHandler<ExportFhirBundleQuer
                         request.MaxHistoryVersions,
                         cancellationToken);
 
-                    historyResources.AddRange(history.Items);
+                    historyResources.AddRange(history);
                 }
             }
 
