@@ -9,7 +9,64 @@
 3. **Dependency Inversion**: Domain never depends on Infrastructure
 4. **SOLID Principles**: Apply all SOLID principles consistently
 
-### 📁 File Structure Rules
+## 🗄️ **POSTGRESQL NAMING CONVENTIONS (CRITICAL)**
+
+**CRITICAL**: Cursor AI MUST follow these PostgreSQL naming conventions for all database operations.
+
+### **Table Naming Rules**
+```csharp
+// ✅ CORRECT: snake_case, Plural, Quoted
+builder.ToTable("todo_items");
+builder.ToTable("fhir_resources");
+builder.ToTable("patient_accesses");
+
+// ❌ WRONG: Don't use these patterns
+builder.ToTable("TodoItems");        // PascalCase
+builder.ToTable("todoitems");        // No underscores
+builder.ToTable("todo_item");        // Singular
+builder.ToTable("Todo_Items");       // Mixed case
+```
+
+### **Quick Naming Reference**
+```
+Entity → Table Name
+TodoItem → "todo_items"
+FhirResource → "fhir_resources"
+PatientAccess → "patient_accesses"
+UserRole → "user_roles"
+UserClaim → "user_claims"
+```
+
+### **Column & Index Naming**
+```csharp
+// Columns: snake_case, Quoted
+builder.Property(x => x.Title).HasColumnName("title");
+builder.Property(x => x.CreatedAt).HasColumnName("created_at");
+
+// Indexes: snake_case pattern
+builder.HasIndex(x => x.ListId).HasDatabaseName("ix_todo_items_list_id");
+builder.HasIndex(x => new { x.ListId, x.Done }).HasDatabaseName("ix_todo_items_list_id_done");
+
+// Constraints: snake_case pattern
+.HasConstraintName("fk_todo_items_todo_lists_list_id");
+```
+
+### **PostgreSQL-Specific Features**
+```csharp
+// UUID Primary Keys
+builder.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+
+// JSONB Columns
+builder.Property(x => x.Metadata).HasColumnType("jsonb");
+builder.HasIndex(x => x.Metadata).HasMethod("gin");
+
+// Array Types
+builder.Property(x => x.Tags).HasColumnType("text[]");
+```
+
+**For complete details, see**: `docs/cursor-agent/workflows/DATABASE_GUIDE.md`
+
+## 📁 File Structure Rules
 
 ```
 src/
@@ -19,15 +76,15 @@ src/
 └── Web/             # API endpoints, configuration
 ```
 
-### 🔧 Implementation Patterns
+## 🔧 Implementation Patterns
 
-#### Creating New Entity
+### Creating New Entity
 1. **Domain Layer**: Create entity in `src/Domain/Entities/`
 2. **Application Layer**: Create commands/queries in `src/Application/[FeatureName]/`
 3. **Infrastructure Layer**: Add to `ApplicationDbContext` and create configuration
 4. **Web Layer**: Create endpoints in `src/Web/Endpoints/`
 
-#### Command Pattern
+### Command Pattern
 ```csharp
 // Command
 public record CreateEntityCommand : IRequest<int>
@@ -56,7 +113,7 @@ public class CreateEntityCommandValidator : AbstractValidator<CreateEntityComman
 }
 ```
 
-#### Query Pattern
+### Query Pattern
 ```csharp
 // Query
 public record GetEntitiesQuery : IRequest<PaginatedList<EntityDto>>
@@ -78,7 +135,7 @@ public class GetEntitiesQueryHandler : IRequestHandler<GetEntitiesQuery, Paginat
 }
 ```
 
-#### Endpoint Pattern
+### Endpoint Pattern
 ```csharp
 public class Entities : EndpointGroupBase
 {
@@ -121,7 +178,7 @@ public class Entities : EndpointGroupBase
 }
 ```
 
-### 🛡️ Security Rules
+## 🛡️ Security Rules
 
 1. **Always add authorization**: `.RequireAuthorization()` on endpoints
 2. **Use authorization attributes**: `[Authorize(Roles = "Admin")]` on commands/queries
@@ -134,14 +191,14 @@ public class Entities : EndpointGroupBase
 9. **Audit logging**: Log security-relevant events
 10. **Principle of least privilege**: Grant minimum required permissions
 
-### 🧪 Testing Rules
+## 🧪 Testing Rules
 
 1. **Unit tests**: Test commands, queries, validators
 2. **Integration tests**: Test database operations
 3. **Functional tests**: Test complete workflows
 4. **Test coverage**: Maintain >80% coverage
 
-### 🚨 Common Mistakes to Avoid
+## 🚨 Common Mistakes to Avoid
 
 ❌ **Don't**:
 - Create circular dependencies between layers
@@ -159,7 +216,7 @@ public class Entities : EndpointGroupBase
 - Add meaningful tests
 - Update documentation
 
-### 🔄 Development Workflow
+## 🔄 Development Workflow
 
 1. **Domain**: Create entities, value objects, events
 2. **Application**: Create commands/queries with handlers
@@ -168,14 +225,14 @@ public class Entities : EndpointGroupBase
 5. **Testing**: Write unit and integration tests
 6. **Documentation**: Update docs and comments
 
-### 📚 Key Files to Reference
+## 📚 Key Files to Reference
 
 - `src/Application/TodoItems/` - Example feature implementation
 - `src/Web/Endpoints/TodoItems.cs` - Example endpoints
 - `src/Infrastructure/Data/ApplicationDbContext.cs` - Database context
 - `src/Application/Common/Behaviours/` - Cross-cutting concerns
 
-### 🛠️ Code Generation Commands
+## 🛠️ Code Generation Commands
 
 ```bash
 # Create new command
@@ -185,7 +242,7 @@ dotnet new ca-usecase --name Create[Entity] --feature-name [FeatureName] --useca
 dotnet new ca-usecase -n Get[Entities] -fn [FeatureName] -ut query -rt [Entities]Vm
 ```
 
-### 📊 Quality Checklist
+## 📊 Quality Checklist
 
 - [ ] Solution builds successfully
 - [ ] All tests pass (unit, integration, functional)

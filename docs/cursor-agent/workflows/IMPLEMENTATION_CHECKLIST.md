@@ -139,6 +139,12 @@
   - [ ] Create seed data
   - [ ] Add to migration
   - [ ] Test seed data
+- [ ] **PostgreSQL Naming Conventions**: Follow strict naming rules
+  - [ ] **Table Names**: Use snake_case, Plural, Quoted (e.g., "todo_items")
+  - [ ] **Column Names**: Use snake_case, Quoted (e.g., "title", "created_at")
+  - [ ] **Index Names**: Use snake_case pattern (e.g., "ix_todo_items_list_id")
+  - [ ] **Constraint Names**: Use snake_case pattern (e.g., "fk_todo_items_todo_lists_list_id")
+  - [ ] **PostgreSQL Features**: Use jsonb, UUID, arrays appropriately
 
 ### 📚 Documentation Implementation
 - [ ] **Code Documentation**: Add code comments
