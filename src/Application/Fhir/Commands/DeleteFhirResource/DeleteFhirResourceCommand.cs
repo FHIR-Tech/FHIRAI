@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Commands.DeleteFhirResource;
 
 /// <summary>
 /// Command to delete (soft delete) a FHIR resource
 /// </summary>
+[FhirScope("user/*", RequiresPatientAccess = true, PatientIdParameter = "FhirId")]
 public record DeleteFhirResourceCommand : IRequest<DeleteFhirResourceResponse>
 {
     /// <summary>

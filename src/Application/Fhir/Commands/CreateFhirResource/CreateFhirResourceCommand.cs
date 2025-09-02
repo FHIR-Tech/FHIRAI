@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Commands.CreateFhirResource;
 
 /// <summary>
 /// Command to create a new FHIR resource
 /// </summary>
+[FhirScope("user/*", RequiresPatientAccess = true)]
 public record CreateFhirResourceCommand : IRequest<CreateFhirResourceResponse>
 {
     /// <summary>

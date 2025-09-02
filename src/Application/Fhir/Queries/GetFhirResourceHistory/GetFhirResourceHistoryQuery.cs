@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Queries.GetFhirResourceHistory;
 
 /// <summary>
 /// Query to get version history of a FHIR resource
 /// </summary>
+[FhirScope("user/*", RequiresPatientAccess = true, PatientIdParameter = "FhirId")]
 public record GetFhirResourceHistoryQuery : IRequest<GetFhirResourceHistoryResponse>
 {
     /// <summary>

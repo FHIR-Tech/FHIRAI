@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Commands.ImportFhirBundle;
 
 /// <summary>
 /// Command to import FHIR resources from a FHIR Bundle
 /// </summary>
+[FhirScope("system/*")]
 public record ImportFhirBundleCommand : IRequest<ImportFhirBundleResponse>
 {
     /// <summary>

@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Queries.SearchFhirResources;
 
 /// <summary>
 /// Query to search FHIR resources
 /// </summary>
+[FhirScope("user/*", RequiresPatientAccess = true, PatientIdParameter = "PatientReference")]
 public record SearchFhirResourcesQuery : IRequest<SearchFhirResourcesResponse>
 {
     /// <summary>

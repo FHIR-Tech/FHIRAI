@@ -5,6 +5,7 @@ using FHIRAI.Infrastructure.Data.Interceptors;
 using FHIRAI.Infrastructure.Identity;
 using FHIRAI.Domain.Repositories;
 using FHIRAI.Infrastructure.Data.Repositories;
+using FHIRAI.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -36,6 +37,7 @@ public static class DependencyInjection
         builder.Services.AddScoped<ApplicationDbContextInitialiser>();
 
         builder.Services.AddScoped<IFhirResourceRepository, FhirResourceRepository>();
+        builder.Services.AddScoped<IPatientAccessService, PatientAccessService>();
 
         builder.Services.AddAuthentication()
             .AddBearerToken(IdentityConstants.BearerScheme);

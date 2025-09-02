@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Queries.ExportFhirBundle;
 
 /// <summary>
 /// Query to export FHIR resources as a bundle
 /// </summary>
+[FhirScope("system/*")]
 public record ExportFhirBundleQuery : IRequest<ExportFhirBundleResponse>
 {
     /// <summary>

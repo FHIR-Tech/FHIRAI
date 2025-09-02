@@ -10,5 +10,7 @@ public interface IApplicationDbContext
 
     DbSet<FhirResource> FhirResources { get; }
 
+    DbSet<PatientAccess> PatientAccesses { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

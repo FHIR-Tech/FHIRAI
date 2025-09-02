@@ -17,6 +17,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
 
     public DbSet<FhirResource> FhirResources => Set<FhirResource>();
 
+    public DbSet<PatientAccess> PatientAccesses => Set<PatientAccess>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

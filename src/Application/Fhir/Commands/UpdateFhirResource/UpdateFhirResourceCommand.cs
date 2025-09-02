@@ -1,10 +1,12 @@
 using MediatR;
+using FHIRAI.Application.Common.Security;
 
 namespace FHIRAI.Application.Fhir.Commands.UpdateFhirResource;
 
 /// <summary>
 /// Command to update an existing FHIR resource
 /// </summary>
+[FhirScope("user/*", RequiresPatientAccess = true, PatientIdParameter = "FhirId")]
 public record UpdateFhirResourceCommand : IRequest<UpdateFhirResourceResponse>
 {
     /// <summary>
