@@ -25,16 +25,13 @@ app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseSwaggerUi(settings =>
-{
-    settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
-});
+app.UseOpenApi();
+app.UseSwaggerUi();
 
 
 app.UseExceptionHandler(options => { });
 
-app.Map("/", () => Results.Redirect("/api"));
+app.Map("/", () => Results.Redirect("/swagger"));
 
 app.MapEndpoints();
 

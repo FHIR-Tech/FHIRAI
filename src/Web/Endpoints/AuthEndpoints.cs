@@ -2,8 +2,10 @@
 
 namespace FHIRAI.Web.Endpoints;
 
-public class Users : EndpointGroupBase
+public class AuthEndpoints : EndpointGroupBase
 {
+    public override string? GroupName => "auth";
+
     public override void Map(RouteGroupBuilder groupBuilder)
     {
         groupBuilder.MapIdentityApi<ApplicationUser>();
