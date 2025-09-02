@@ -30,7 +30,8 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
 
         builder.Property(t => t.Priority)
             .IsRequired()
-            .HasDefaultValue(Domain.Enums.PriorityLevel.Medium);
+            .HasDefaultValue(Domain.Enums.PriorityLevel.Medium)
+            .HasSentinel(Domain.Enums.PriorityLevel.None);
 
         builder.Property(t => t.Done)
             .IsRequired()
