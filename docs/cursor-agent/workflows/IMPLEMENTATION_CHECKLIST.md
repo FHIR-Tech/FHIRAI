@@ -168,6 +168,18 @@
   - [ ] Add health checks
   - [ ] Add logging
 
+## 📋 **WORKFLOW COMPLETION REPORTING (QUICK REFERENCE)**
+
+**CRITICAL**: After completing ANY implementation task, Cursor AI MUST follow the workflow completion reporting guide.
+
+### **Quick Reference**:
+- **Primary Guide**: `docs/cursor-agent/workflows/WORKFLOW_COMPLETION_REPORTING.md`
+- **Required Actions**: Generate reports, create logs, update summaries
+- **Quality Standards**: Follow professional documentation standards
+- **Integration**: All workflows must integrate with reporting requirements
+
+**For complete workflow details, see**: `WORKFLOW_COMPLETION_REPORTING.md`
+
 ## 🔍 Code Review Checklist
 
 ### ✅ Code Quality
@@ -267,6 +279,22 @@
 - [ ] **Backup Verification**: Verify backups regularly
 - [ ] **Monitoring Alerts**: Review and update alerts
 
+## 🎯 **FINAL COMPLETION CHECKLIST**
+
+### **Before Marking Task Complete**:
+- [ ] **All Implementation Items**: All above checkboxes completed
+- [ ] **Workflow Reporting**: Follow `WORKFLOW_COMPLETION_REPORTING.md`
+- [ ] **Documentation Updated**: All related documentation current
+- [ ] **Cross-references Valid**: All document links working
+- [ ] **Quality Standards Met**: All implementation standards satisfied
+- [ ] **User Notified**: User informed of completion and next steps
+
+### **Completion Confirmation**:
+- [ ] **Task Status**: Marked as "Completed" in task tracking
+- [ ] **Workflow Reports**: All required reports generated
+- [ ] **Next Steps**: Clear next steps provided to user
+- [ ] **Maintenance Notes**: Any future maintenance requirements documented
+
 ---
 
-**Note**: Use this checklist for every feature implementation to ensure consistency và quality across the project.
+**Note**: Use this checklist for every feature implementation to ensure consistency và quality across the project. **ALWAYS follow workflow completion reporting** to maintain comprehensive audit trails and documentation standards.

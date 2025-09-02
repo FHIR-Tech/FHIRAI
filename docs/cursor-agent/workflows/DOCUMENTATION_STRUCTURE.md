@@ -144,6 +144,18 @@ scripts/
 - **Update Index**: Always update this navigation guide
 - **Cross-reference**: Link related documents
 
+## 📋 **WORKFLOW COMPLETION REPORTING (QUICK REFERENCE)**
+
+**CRITICAL**: After completing ANY development task, Cursor AI MUST follow the workflow completion reporting guide.
+
+### **Quick Reference**:
+- **Primary Guide**: `docs/cursor-agent/workflows/WORKFLOW_COMPLETION_REPORTING.md`
+- **Required Actions**: Generate reports, create logs, update summaries
+- **Quality Standards**: Follow professional documentation standards
+- **Integration**: All workflows must integrate with reporting requirements
+
+**For complete workflow details, see**: `WORKFLOW_COMPLETION_REPORTING.md`
+
 ## 🏷️ Naming Conventions
 
 ### File Naming (Strict Patterns)
@@ -176,6 +188,13 @@ Examples:          {use-case}_example.md
 Samples:           {resource-type}_{purpose}_{date}.json
 Logs:              {session-type}_{date}_{time}.md
 Decisions:         ADR_{number}_{title}.md
+```
+
+### Report Naming (Quick Reference)
+```
+Implementation Reports: {feature}_{date}_report.md
+Session Logs:          {session-type}_{date}_{time}.md
+Task Summaries:        {task-type}_{date}_summary.md
 ```
 
 ### Directory Structure
@@ -234,6 +253,7 @@ azd deploy
   - Complete step-by-step process for new features
   - Domain, Application, Infrastructure, Web layer implementation
   - Testing, Security, Database implementation
+  - **Workflow completion reporting integration**
 
 ### For Rules & Patterns
 - **Development Rules**: `docs/cursor-agent/workflows/CURSOR_AI_RULES.md`
@@ -242,6 +262,7 @@ azd deploy
   - Security, Database, Testing rules
   - Code quality standards
   - **Cursor Agent Documentation Rules**
+  - **Workflow completion reporting integration**
 
 ### For Quick Reference
 - **Quick Reference**: `docs/cursor-agent/workflows/CURSOR_AI_QUICK_REFERENCE.md`
@@ -257,6 +278,7 @@ azd deploy
   - ADRs, diagrams, design decisions
 - **Cursor Agent Docs**: `docs/cursor-agent/`
   - Implementation reports, session logs, decisions
+  - **Workflow completion reporting integration**
 
 ## 🎯 Common Development Scenarios
 
@@ -267,7 +289,7 @@ azd deploy
 4. **Web**: Create endpoints in `src/Web/Endpoints/`
 5. **Samples**: Add sample data in `scripts/samples/resources/`
 6. **Documentation**: Create API spec in `docs/api/specifications/`
-7. **Report**: Generate implementation report in `docs/cursor-agent/reports/`
+7. **Workflow Reporting**: Follow `WORKFLOW_COMPLETION_REPORTING.md`
 8. **Reference**: Follow `TodoItems` feature pattern
 
 ### Scenario 2: Add Authentication to Feature
@@ -275,14 +297,16 @@ azd deploy
 2. **Endpoints**: Add `.RequireAuthorization()`
 3. **Policies**: Define in `src/Domain/Constants/Policies.cs`
 4. **Documentation**: Update security documentation
-5. **Reference**: See existing authorized endpoints
+5. **Workflow Reporting**: Follow completion reporting guide
+6. **Reference**: See existing authorized endpoints
 
 ### Scenario 3: Database Schema Changes
 1. **Domain**: Update entity properties
 2. **Infrastructure**: Create/update entity configuration
 3. **Migration**: Generate and apply migration
 4. **Samples**: Update sample data if needed
-5. **Reference**: See existing entity configurations
+5. **Workflow Reporting**: Follow completion reporting guide
+6. **Reference**: See existing entity configurations
 
 ### Scenario 4: Add New API Endpoint
 1. **Application**: Create query/command if needed
@@ -290,7 +314,8 @@ azd deploy
 3. **Mapping**: Add to `Map()` method with authorization
 4. **API Docs**: Update `docs/api/specifications/`
 5. **Examples**: Add to `docs/api/examples/`
-6. **Reference**: See `src/Web/Endpoints/TodoItems.cs`
+6. **Workflow Reporting**: Follow completion reporting guide
+7. **Reference**: See `src/Web/Endpoints/TodoItems.cs`
 
 ### Scenario 5: Create Implementation Report
 1. **Use Template**: `docs/cursor-agent/reports/template_implementation_report.md`
@@ -299,6 +324,7 @@ azd deploy
 4. **Quality Metrics**: Patterns used, testing coverage, validation
 5. **Next Steps**: Immediate actions, future improvements
 6. **Cross-reference**: Link to related documents and code
+7. **Workflow Integration**: Follow completion reporting guide
 
 ## 🚨 Common Issues & Solutions
 
@@ -323,6 +349,7 @@ azd deploy
 - **Naming**: Follow exact naming conventions
 - **Structure**: Place files in correct directory structure
 - **Cross-references**: Link related documents
+- **Workflow Integration**: **ALWAYS follow completion reporting guide**
 
 ## 📋 Quality Checklist
 
@@ -334,8 +361,7 @@ azd deploy
 - [ ] No circular dependencies
 - [ ] Follows Clean Architecture principles
 - [ ] Documentation updated
-- [ ] Implementation report created
-- [ ] Session log updated
+- [ ] Workflow reporting integration completed
 
 ### Code Review Points
 - [ ] Layer responsibilities respected
@@ -346,6 +372,7 @@ azd deploy
 - [ ] Documentation complete
 - [ ] Samples created
 - [ ] API docs updated
+- [ ] Workflow completion reporting followed
 
 ### Documentation Quality
 - [ ] Uses proper templates
@@ -354,7 +381,8 @@ azd deploy
 - [ ] Cross-references maintained
 - [ ] Technical details accurate
 - [ ] Professional language used
+- [ ] Workflow integration completed
 
 ---
 
-**🎯 AI Instructions**: Use this guide to quickly locate relevant information and follow established patterns. Always reference the specific documentation files for detailed implementation guidance. When in doubt, follow the `TodoItems` feature as the reference pattern. **Document everything** and maintain comprehensive audit trails for all changes.
+**🎯 AI Instructions**: Use this guide to quickly locate relevant information and follow established patterns. Always reference the specific documentation files for detailed implementation guidance. When in doubt, follow the `TodoItems` feature as the reference pattern. **Document everything** and maintain comprehensive audit trails for all changes. **ALWAYS integrate with workflow completion reporting** to maintain documentation standards and audit trails.
