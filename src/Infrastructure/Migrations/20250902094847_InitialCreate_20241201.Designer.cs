@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FHIRAI.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250902085624_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250902094847_InitialCreate_20241201")]
+    partial class InitialCreate_20241201
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,246 +33,342 @@ namespace FHIRAI.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<DateTime?>("FhirCreated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fhir_created");
 
                     b.Property<string>("FhirId")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("fhir_id");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<DateTime?>("LastUpdated")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated");
 
                     b.Property<string>("OrganizationReference")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("organization_reference");
 
                     b.Property<string>("PatientReference")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("patient_reference");
 
                     b.Property<string>("PractitionerReference")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("practitioner_reference");
 
                     b.Property<string>("ResourceJson")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("resource_json");
 
                     b.Property<string>("ResourceType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("resource_type");
 
                     b.Property<string>("SearchParameters")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("search_parameters");
 
                     b.Property<string>("SecurityLabels")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("security_labels");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
-                        .HasDefaultValue("active");
+                        .HasDefaultValue("active")
+                        .HasColumnName("status");
 
                     b.Property<string>("Tags")
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("tags");
 
                     b.Property<int>("VersionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasDefaultValue(1)
+                        .HasColumnName("version_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FhirCreated");
+                    b.HasIndex("FhirCreated")
+                        .HasDatabaseName("ix_fhir_resources_fhir_created");
 
-                    b.HasIndex("FhirId");
+                    b.HasIndex("FhirId")
+                        .HasDatabaseName("ix_fhir_resources_fhir_id");
 
-                    b.HasIndex("LastUpdated");
+                    b.HasIndex("LastUpdated")
+                        .HasDatabaseName("ix_fhir_resources_last_updated");
 
-                    b.HasIndex("OrganizationReference");
+                    b.HasIndex("OrganizationReference")
+                        .HasDatabaseName("ix_fhir_resources_organization_reference");
 
-                    b.HasIndex("PatientReference");
+                    b.HasIndex("PatientReference")
+                        .HasDatabaseName("ix_fhir_resources_patient_reference");
 
-                    b.HasIndex("PractitionerReference");
+                    b.HasIndex("PractitionerReference")
+                        .HasDatabaseName("ix_fhir_resources_practitioner_reference");
 
-                    b.HasIndex("ResourceType");
+                    b.HasIndex("ResourceType")
+                        .HasDatabaseName("ix_fhir_resources_resource_type");
 
-                    b.HasIndex("SearchParameters");
+                    b.HasIndex("SearchParameters")
+                        .HasDatabaseName("ix_fhir_resources_search_parameters");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchParameters"), "gin");
 
-                    b.HasIndex("SecurityLabels");
+                    b.HasIndex("SecurityLabels")
+                        .HasDatabaseName("ix_fhir_resources_security_labels");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SecurityLabels"), "gin");
 
-                    b.HasIndex("Status");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_fhir_resources_status");
 
-                    b.HasIndex("Tags");
+                    b.HasIndex("Tags")
+                        .HasDatabaseName("ix_fhir_resources_tags");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Tags"), "gin");
 
-                    b.HasIndex("ResourceType", "FhirId");
+                    b.HasIndex("ResourceType", "FhirId")
+                        .HasDatabaseName("ix_fhir_resources_resource_type_fhir_id");
 
-                    b.HasIndex("OrganizationReference", "ResourceType", "Status");
+                    b.HasIndex("OrganizationReference", "ResourceType", "Status")
+                        .HasDatabaseName("ix_fhir_resources_organization_reference_resource_type_status");
 
-                    b.HasIndex("PatientReference", "ResourceType", "Status");
+                    b.HasIndex("PatientReference", "ResourceType", "Status")
+                        .HasDatabaseName("ix_fhir_resources_patient_reference_resource_type_status");
 
-                    b.HasIndex("ResourceType", "Status", "LastUpdated");
+                    b.HasIndex("ResourceType", "Status", "LastUpdated")
+                        .HasDatabaseName("ix_fhir_resources_resource_type_status_last_updated");
 
-                    b.ToTable("FhirResources", (string)null);
+                    b.ToTable("fhir_resources", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.Patient", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("AddressLine1")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address_line1");
 
                     b.Property<string>("AddressLine2")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("address_line2");
 
                     b.Property<string>("City")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("city");
 
                     b.Property<string>("Country")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("country");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTime?>("DateOfBirth")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_of_birth");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<string>("Email")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("email");
 
                     b.Property<string>("EmergencyContactEmail")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("emergency_contact_email");
 
                     b.Property<string>("EmergencyContactName")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("emergency_contact_name");
 
                     b.Property<string>("EmergencyContactPhone")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("emergency_contact_phone");
 
                     b.Property<string>("EmergencyContactRelationship")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("emergency_contact_relationship");
 
                     b.Property<string>("FhirPatientId")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("fhir_patient_id");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("first_name");
 
                     b.Property<string>("Gender")
                         .IsRequired()
                         .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("gender");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("last_name");
 
                     b.Property<string>("ManagingOrganizationId")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("managing_organization_id");
 
                     b.Property<string>("MaritalStatus")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("marital_status");
 
                     b.Property<string>("MiddleName")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("middle_name");
 
                     b.Property<string>("PatientType")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("patient_type");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("phone");
 
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("postal_code");
 
                     b.Property<string>("PrimaryCareProviderId")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("primary_care_provider_id");
 
                     b.Property<string>("State")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("state");
 
                     b.Property<int>("Status")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Patient");
+                    b.HasIndex("DateOfBirth")
+                        .HasDatabaseName("ix_patients_date_of_birth");
+
+                    b.HasIndex("Email")
+                        .HasDatabaseName("ix_patients_email");
+
+                    b.HasIndex("FhirPatientId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_patients_fhir_patient_id");
+
+                    b.HasIndex("Gender")
+                        .HasDatabaseName("ix_patients_gender");
+
+                    b.HasIndex("PatientType")
+                        .HasDatabaseName("ix_patients_patient_type");
+
+                    b.HasIndex("Phone")
+                        .HasDatabaseName("ix_patients_phone");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_patients_status");
+
+                    b.HasIndex("LastName", "FirstName")
+                        .HasDatabaseName("ix_patients_last_name_first_name");
+
+                    b.HasIndex("Status", "PatientType")
+                        .HasDatabaseName("ix_patients_status_patient_type");
+
+                    b.ToTable("patients", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.PatientAccess", b =>
@@ -283,167 +379,242 @@ namespace FHIRAI.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<int>("AccessLevel")
-                        .HasMaxLength(50)
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("access_level");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<string>("EmergencyJustification")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("emergency_justification");
 
                     b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
 
                     b.Property<DateTime>("GrantedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("granted_at");
 
                     b.Property<string>("GrantedBy")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("granted_by");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<bool>("IsEmergencyAccess")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_emergency_access");
 
                     b.Property<bool>("IsEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true);
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_enabled");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<Guid>("PatientId")
-                        .HasMaxLength(255)
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
 
                     b.Property<string>("Reason")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("reason");
 
                     b.Property<Guid>("UserId")
-                        .HasMaxLength(255)
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccessLevel");
+                    b.HasIndex("AccessLevel")
+                        .HasDatabaseName("ix_patient_accesses_access_level");
 
-                    b.HasIndex("ExpiresAt");
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_patient_accesses_expires_at");
 
-                    b.HasIndex("GrantedAt");
+                    b.HasIndex("GrantedAt")
+                        .HasDatabaseName("ix_patient_accesses_granted_at");
 
-                    b.HasIndex("IsEnabled");
+                    b.HasIndex("IsEnabled")
+                        .HasDatabaseName("ix_patient_accesses_is_enabled");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_patient_accesses_patient_id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_patient_accesses_user_id");
 
-                    b.HasIndex("PatientId", "IsEmergencyAccess", "IsEnabled");
+                    b.HasIndex("PatientId", "IsEmergencyAccess", "IsEnabled")
+                        .HasDatabaseName("ix_patient_accesses_patient_id_is_emergency_access_is_enabled");
 
-                    b.HasIndex("PatientId", "IsEnabled", "ExpiresAt");
+                    b.HasIndex("PatientId", "IsEnabled", "ExpiresAt")
+                        .HasDatabaseName("ix_patient_accesses_patient_id_is_enabled_expires_at");
 
-                    b.HasIndex("PatientId", "UserId", "AccessLevel");
+                    b.HasIndex("PatientId", "UserId", "AccessLevel")
+                        .HasDatabaseName("ix_patient_accesses_patient_id_user_id_access_level");
 
-                    b.HasIndex("UserId", "AccessLevel", "IsEnabled");
+                    b.HasIndex("UserId", "AccessLevel", "IsEnabled")
+                        .HasDatabaseName("ix_patient_accesses_user_id_access_level_is_enabled");
 
-                    b.ToTable("PatientAccesses", (string)null);
+                    b.ToTable("patient_accesses", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.PatientConsent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<string>("ConsentIpAddress")
                         .HasMaxLength(45)
-                        .HasColumnType("character varying(45)");
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("consent_ip_address");
 
                     b.Property<int>("ConsentType")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("consent_type");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<string>("Details")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("details");
 
                     b.Property<DateTime?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
 
                     b.Property<DateTime>("GrantedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("granted_at");
 
                     b.Property<string>("GrantedBy")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("granted_by");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<bool>("IsElectronicConsent")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_electronic_consent");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<Guid>("PatientId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
 
                     b.Property<string>("Purpose")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("purpose");
 
                     b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
 
                     b.Property<string>("RevokedBy")
                         .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("revoked_by");
 
                     b.Property<string>("UserAgent")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("user_agent");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PatientId");
+                    b.HasIndex("ConsentType")
+                        .HasDatabaseName("ix_patient_consents_consent_type");
 
-                    b.ToTable("PatientConsent");
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_patient_consents_expires_at");
+
+                    b.HasIndex("GrantedAt")
+                        .HasDatabaseName("ix_patient_consents_granted_at");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("ix_patient_consents_is_active");
+
+                    b.HasIndex("IsElectronicConsent")
+                        .HasDatabaseName("ix_patient_consents_is_electronic_consent");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_patient_consents_patient_id");
+
+                    b.HasIndex("RevokedAt")
+                        .HasDatabaseName("ix_patient_consents_revoked_at");
+
+                    b.HasIndex("ConsentType", "IsActive", "GrantedAt")
+                        .HasDatabaseName("ix_patient_consents_consent_type_is_active_granted_at");
+
+                    b.HasIndex("PatientId", "ConsentType", "IsActive")
+                        .HasDatabaseName("ix_patient_consents_patient_id_consent_type_is_active");
+
+                    b.HasIndex("PatientId", "IsActive", "ExpiresAt")
+                        .HasDatabaseName("ix_patient_consents_patient_id_is_active_expires_at");
+
+                    b.ToTable("patient_consents", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.TodoItem", b =>
@@ -454,63 +625,80 @@ namespace FHIRAI.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<bool>("Done")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("done");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<Guid>("ListId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("list_id");
 
                     b.Property<string>("Note")
                         .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("note");
 
                     b.Property<int>("Priority")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasDefaultValue(2);
+                        .HasDefaultValue(2)
+                        .HasColumnName("priority");
 
                     b.Property<DateTime?>("Reminder")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminder");
 
                     b.Property<string>("Title")
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ListId");
+                    b.HasIndex("ListId")
+                        .HasDatabaseName("ix_todo_items_list_id");
 
-                    b.HasIndex("Reminder");
+                    b.HasIndex("Reminder")
+                        .HasDatabaseName("ix_todo_items_reminder");
 
-                    b.HasIndex("ListId", "Done");
+                    b.HasIndex("ListId", "Done")
+                        .HasDatabaseName("ix_todo_items_list_id_done");
 
-                    b.HasIndex("ListId", "Priority");
+                    b.HasIndex("ListId", "Priority")
+                        .HasDatabaseName("ix_todo_items_list_id_priority");
 
-                    b.ToTable("TodoItems", (string)null);
+                    b.ToTable("todo_items", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.TodoList", b =>
@@ -521,35 +709,43 @@ namespace FHIRAI.Infrastructure.Migrations
                         .HasDefaultValueSql("gen_random_uuid()");
 
                     b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
 
                     b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_deleted");
 
                     b.Property<DateTimeOffset>("LastModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified_at");
 
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("last_modified_by");
 
                     b.Property<string>("Title")
                         .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
 
                     b.HasKey("Id");
 
-                    b.ToTable("TodoLists", (string)null);
+                    b.ToTable("todo_lists", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Infrastructure.Identity.ApplicationUser", b =>
@@ -613,7 +809,7 @@ namespace FHIRAI.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -765,7 +961,8 @@ namespace FHIRAI.Infrastructure.Migrations
                         .WithMany("PatientConsents")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_patient_consents_patients_patient_id");
 
                     b.Navigation("Patient");
                 });
@@ -776,7 +973,8 @@ namespace FHIRAI.Infrastructure.Migrations
                         .WithMany("Items")
                         .HasForeignKey("ListId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_todo_items_todo_lists_list_id");
 
                     b.Navigation("List");
                 });
@@ -792,11 +990,12 @@ namespace FHIRAI.Infrastructure.Migrations
                             b1.Property<string>("Code")
                                 .IsRequired()
                                 .HasMaxLength(7)
-                                .HasColumnType("character varying(7)");
+                                .HasColumnType("character varying(7)")
+                                .HasColumnName("colour_code");
 
                             b1.HasKey("TodoListId");
 
-                            b1.ToTable("TodoLists");
+                            b1.ToTable("todo_lists");
 
                             b1.WithOwner()
                                 .HasForeignKey("TodoListId");
