@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace LVAI.Infrastructure.Identity.Models
+namespace FHIRAI.Infrastructure.Identity.Models
 {
-    public class ApplicationUserRole : IdentityUserRole<long>
+    public class ApplicationUserRole : IdentityUserRole<string>
     {
     }
 }

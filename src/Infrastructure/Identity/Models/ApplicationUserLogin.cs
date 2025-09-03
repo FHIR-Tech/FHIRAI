@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace LVAI.Infrastructure.Identity.Models
+namespace FHIRAI.Infrastructure.Identity.Models
 {
-    public class ApplicationUserLogin : IdentityUserLogin<long>
+    public class ApplicationUserLogin : IdentityUserLogin<string>
     {
     }
 }

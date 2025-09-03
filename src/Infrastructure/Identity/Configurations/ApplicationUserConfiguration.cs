@@ -9,6 +9,11 @@ public class ApplicationUserConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
+        // Basic configuration - can be extended as needed
+        builder.ToTable("ApplicationUsers");
+
+        // Add any custom configurations here if needed
+
         // // Table configuration
         // builder.ToTable("users");
 
