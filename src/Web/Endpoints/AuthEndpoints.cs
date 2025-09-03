@@ -1,4 +1,4 @@
-﻿using FHIRAI.Infrastructure.Identity;
+﻿using FHIRAI.Infrastructure.Identity.Models;
 
 namespace FHIRAI.Web.Endpoints;
 

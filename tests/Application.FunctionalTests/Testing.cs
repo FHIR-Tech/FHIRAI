@@ -1,6 +1,7 @@
 ﻿using FHIRAI.Domain.Constants;
 using FHIRAI.Infrastructure.Data;
 using FHIRAI.Infrastructure.Identity;
+using FHIRAI.Infrastructure.Identity.Models;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

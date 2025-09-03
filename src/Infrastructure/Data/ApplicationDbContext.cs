@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using FHIRAI.Application.Common.Interfaces;
 using FHIRAI.Domain.Entities;
-using FHIRAI.Infrastructure.Identity;
+using FHIRAI.Infrastructure.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

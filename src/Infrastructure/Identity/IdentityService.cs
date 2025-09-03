@@ -1,5 +1,6 @@
 using FHIRAI.Application.Common.Interfaces;
 using FHIRAI.Application.Common.Models;
+using FHIRAI.Infrastructure.Identity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

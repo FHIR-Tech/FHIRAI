@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using FHIRAI.Infrastructure.Identity.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
