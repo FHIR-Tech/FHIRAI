@@ -1,4 +1,9 @@
-# FHIRAI - Database Guide
+# FHIRAI - Database Guide for .NET 9 + PostgreSQL
+
+> **Mục tiêu**: Hướng dẫn thiết kế CSDL, cấu hình Entity Framework Core, quy trình migration, cache, audit logging, bảo mật và tối ưu hiệu năng cho dự án FHIRAI sử dụng .NET 9 + PostgreSQL.  
+> **Phong cách**: Rõ ràng, có ví dụ thực chiến, tuân thủ quy ước **snake_case, plural, quoted** cho tên bảng/cột.
+
+---
 
 ## 🗄️ Database Design Principles
 
@@ -11,7 +16,7 @@ CREATE TABLE "todo_lists" (
     "id" SERIAL PRIMARY KEY,
     "title" VARCHAR(200) NOT NULL,
     "colour_code" VARCHAR(7) NOT NULL,
-    "created" TIMESTAMP NOT NULL,
+    "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created_by" VARCHAR(100)
 );
 
@@ -22,12 +27,29 @@ CREATE TABLE "todo_items" (
     "done" BOOLEAN NOT NULL DEFAULT FALSE,
     "priority" INTEGER NOT NULL DEFAULT 1,
     "note" VARCHAR(1000),
-    "created" TIMESTAMP NOT NULL,
+    "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created_by" VARCHAR(100),
-    "last_modified" TIMESTAMP,
+    "last_modified" TIMESTAMPTZ,
     "last_modified_by" VARCHAR(100),
     FOREIGN KEY ("list_id") REFERENCES "todo_lists"("id") ON DELETE CASCADE
 );
+```
+
+### JSONB Usage Guidelines
+- **Khi nào dùng**: Dữ liệu **mở rộng**, **metadata**, **payload FHIR**, **thuộc tính tuỳ biến**
+- **Không dùng**: Dữ liệu truy vấn thường xuyên theo điều kiện lọc (nếu có thể chuẩn hoá)
+- **Index**: GIN cho tìm kiếm chứa/đường dẫn
+
+```sql
+-- JSONB & chỉ mục
+ALTER TABLE "fhir_resources" ADD COLUMN "resource_json" JSONB NOT NULL;
+CREATE INDEX CONCURRENTLY "ix_fhir_resources_resource_json_gin"
+  ON "fhir_resources" USING GIN ("resource_json");
+
+-- Ví dụ truy vấn theo path
+-- Tìm tài nguyên có resource.type = 'Patient'
+SELECT id FROM "fhir_resources"
+WHERE resource_json->>'resourceType' = 'Patient';
 ```
 
 ### Indexing Strategy
@@ -68,13 +90,15 @@ CREATE TABLE "example_table" (
     "title" VARCHAR(200) NOT NULL,              -- Variable-length string with limit
     "description" TEXT,                         -- Unlimited text
     "price" DECIMAL(10,2),                     -- Precise decimal
-    "created_date" TIMESTAMP NOT NULL,          -- Date and time
+    "created_date" TIMESTAMPTZ NOT NULL,        -- Date and time with timezone (UTC)
     "is_active" BOOLEAN NOT NULL DEFAULT TRUE,  -- Boolean
     "tags" TEXT[],                             -- Array of text
-    "metadata" JSONB,                          -- JSON data
+    "metadata" JSONB,                          -- JSON data with GIN index
     "binary_data" BYTEA                        -- Binary data
 );
 ```
+
+---
 
 ## 🔧 Entity Framework Configuration
 
@@ -144,6 +168,63 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
 }
 ```
 
+### FHIR Resource Configuration Example
+```csharp
+public class FhirResourceConfiguration : IEntityTypeConfiguration<FhirResource>
+{
+    public void Configure(EntityTypeBuilder<FhirResource> builder)
+    {
+        // Table configuration
+        builder.ToTable("fhir_resources");
+
+        // Primary key (UUID on PostgreSQL)
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id)
+               .HasColumnName("id")
+               .HasDefaultValueSql("gen_random_uuid()");
+
+        // Properties
+        builder.Property(x => x.ResourceType)
+               .HasColumnName("resource_type")
+               .HasMaxLength(50)
+               .IsRequired();
+
+        builder.Property(x => x.PatientReference)
+               .HasColumnName("patient_reference")
+               .HasMaxLength(100);
+
+        builder.Property(x => x.ResourceJson)
+               .HasColumnName("resource_json")
+               .HasColumnType("jsonb")
+               .IsRequired();
+
+        // Audit properties
+        builder.Property(x => x.Created)
+               .HasColumnName("created")
+               .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+               .HasColumnName("created_by")
+               .HasMaxLength(100);
+
+        builder.Property(x => x.LastModified)
+               .HasColumnName("last_modified");
+
+        builder.Property(x => x.LastModifiedBy)
+               .HasColumnName("last_modified_by")
+               .HasMaxLength(100);
+
+        // Indexes
+        builder.HasIndex(x => x.ResourceType)
+               .HasDatabaseName("ix_fhir_resources_resource_type");
+        builder.HasIndex(x => x.PatientReference)
+               .HasDatabaseName("ix_fhir_resources_patient_reference");
+        builder.HasIndex(x => x.ResourceJson).HasMethod("gin")
+               .HasDatabaseName("ix_fhir_resources_resource_json_gin");
+    }
+}
+```
+
 ### Value Object Configuration
 ```csharp
 public class ColourConfiguration : IEntityTypeConfiguration<Colour>
@@ -180,26 +261,42 @@ public class AddressConfiguration : IEntityTypeConfiguration<Address>
 {
     public void Configure(EntityTypeBuilder<Address> builder)
     {
-        builder.OwnsOne(x => x.Location, location =>
+        builder.ToTable("addresses");
+        builder.HasKey(x => x.Id);
+
+        builder.OwnsOne(x => x.Location, owned =>
         {
-            location.Property(l => l.Street)
-                .HasColumnName("street")
-                .HasMaxLength(200);
-            location.Property(l => l.City)
-                .HasColumnName("city")
-                .HasMaxLength(100);
-            location.Property(l => l.State)
-                .HasColumnName("state")
-                .HasMaxLength(50);
-            location.Property(l => l.ZipCode)
-                .HasColumnName("zip_code")
-                .HasMaxLength(10);
-            location.Property(l => l.Country)
-                .HasColumnName("country")
-                .HasMaxLength(100);
+            owned.Property(p => p.Street).HasColumnName("street").HasMaxLength(200);
+            owned.Property(p => p.City).HasColumnName("city").HasMaxLength(100);
+            owned.Property(p => p.State).HasColumnName("state").HasMaxLength(50);
+            owned.Property(p => p.ZipCode).HasColumnName("zip_code").HasMaxLength(10);
+            owned.Property(p => p.Country).HasColumnName("country").HasMaxLength(100);
         });
     }
 }
+```
+
+### Global Query Filters & Soft Delete
+```csharp
+// Configure global query filters
+modelBuilder.Entity<TodoItem>()
+    .HasQueryFilter(x => !x.IsDeleted);
+
+modelBuilder.Entity<FhirResource>()
+    .HasQueryFilter(x => !x.IsDeleted);
+```
+
+### Concurrency Handling
+```csharp
+// Use PostgreSQL xmin as concurrency token
+builder.Property<uint>("xmin")
+       .IsRowVersion()
+       .HasColumnName("xmin");
+
+// Or use custom row_version field
+builder.Property(x => x.RowVersion)
+       .IsRowVersion()
+       .HasColumnName("row_version");
 ```
 
 ### DbContext Configuration
@@ -212,6 +309,7 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<TodoList> TodoLists => Set<TodoList>();
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+    public DbSet<FhirResource> FhirResources => Set<FhirResource>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -220,6 +318,9 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 
         // Configure global query filters
         modelBuilder.Entity<TodoItem>()
+            .HasQueryFilter(x => !x.IsDeleted);
+
+        modelBuilder.Entity<FhirResource>()
             .HasQueryFilter(x => !x.IsDeleted);
 
         base.OnModelCreating(modelBuilder);
@@ -272,14 +373,16 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
 }
 ```
 
+---
+
 ## 📊 Migration Management
 
 ### Migration Naming Convention
 ```bash
-# Format: {Description}_{Date}
-dotnet ef migrations add CreateTodoItems_20241201
-dotnet ef migrations add AddPriorityToTodoItems_20241202
-dotnet ef migrations add AddAuditFields_20241203
+# Format: {Action/Entity}_{yyyyMMddHHmm}
+dotnet ef migrations add CreateFhirResources_202412011030
+dotnet ef migrations add AddIndexOnResourceType_202412021200
+dotnet ef migrations add AddAuditFields_202412031500
 ```
 
 ### Migration Strategy
@@ -346,6 +449,29 @@ public partial class CreateTodoItems_20241201 : Migration
 }
 ```
 
+### Migration Commands
+```bash
+# Create migration
+dotnet ef migrations add CreateFhirResources_202412011030
+
+# Apply to database
+dotnet ef database update
+
+# Remove last migration (not applied)
+dotnet ef migrations remove
+
+# Generate idempotent script (for CI/CD)
+dotnet ef migrations script --idempotent -o ./artifacts/migrate.sql
+
+# Rollback to specific migration
+dotnet ef database update PreviousMigrationName
+```
+
+### Migration Safety Principles
+- **Avoid breaking changes** directly (rename column/table) → use `ADD NEW → copy data → switch → DROP OLD`
+- **Create indexes** using `CREATE INDEX CONCURRENTLY` in manual scripts to avoid long locks
+- **Use idempotent scripts** for multiple environments, control version with `__EFMigrationsHistory` table
+
 ### Data Seeding
 ```csharp
 public partial class SeedInitialData_20241201 : Migration
@@ -386,17 +512,7 @@ public partial class SeedInitialData_20241201 : Migration
 }
 ```
 
-### Rollback Strategy
-```bash
-# Rollback to specific migration
-dotnet ef database update PreviousMigrationName
-
-# Remove last migration
-dotnet ef migrations remove
-
-# Generate SQL script for review
-dotnet ef migrations script --from PreviousMigrationName --to CurrentMigrationName
-```
+---
 
 ## 📊 Performance Optimization
 
@@ -447,7 +563,7 @@ public async Task<List<TodoItemDto>> GetTodoItemsWithListInfoAsync(CancellationT
 }
 ```
 
-### Indexing Strategy
+### Advanced Indexing Strategy
 ```sql
 -- Composite indexes for common query patterns
 CREATE INDEX CONCURRENTLY "ix_todo_items_list_id_done_priority" 
@@ -468,43 +584,119 @@ ON "todo_items"("list_id")
 INCLUDE ("title", "done", "priority");
 ```
 
-### Connection Pooling
-```csharp
-// Connection string with pooling configuration
+### Connection Pooling & Npgsql
+```json
 "ConnectionStrings": {
   "DefaultConnection": "Host=localhost;Database=fhirai;Username=postgres;Password=password;Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;Connection Lifetime=300;"
 }
 ```
 
-### Caching Strategy
+**Note**: Consider configuring **Auto Prepare**/`Max Auto Prepare` if workload repeats statements.
+
+---
+
+## 🗄️ Caching Strategy
+
+### When to Cache
+- **Cache**: Read-heavy data, configuration catalogs, lookup identifiers, normalized search results, read-only DTOs
+- **Don't cache**: Sensitive data or frequently changing data without reliable invalidation mechanism
+
+### Cache Models
+- **Cache-aside** (recommended): Read from cache; miss → DB → set cache → return result
+- **Write-through**: Write to DB & cache simultaneously (more complex)
+- **Write-behind**: Not recommended for transactional data
+
+### Key Naming, TTL, Invalidation
+- **Key pattern**: `"Entity:Name:{id}"`, `"Query:TodoItems:list={listId}:page={n}:size={s}"`
+- **TTL recommendation**: `1-15 minutes` depending on data type; allow **sliding** (refresh TTL on hit)
+- **Invalidation**: After `SaveChanges`, delete/mark related keys; can **publish message** for other instances to clear (Redis Pub/Sub)
+
+### Memory Cache Implementation
 ```csharp
-// Memory cache for frequently accessed data
 public class CachedTodoItemRepository : ITodoItemRepository
 {
-    private readonly ITodoItemRepository _repository;
+    private readonly ITodoItemRepository _inner;
     private readonly IMemoryCache _cache;
-    private readonly TimeSpan _cacheExpiration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Exp = TimeSpan.FromMinutes(5);
 
-    public async Task<TodoItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public CachedTodoItemRepository(ITodoItemRepository inner, IMemoryCache cache)
     {
-        var cacheKey = $"TodoItem_{id}";
-        
-        if (_cache.TryGetValue(cacheKey, out TodoItem? cachedItem))
-        {
-            return cachedItem;
-        }
+        _inner = inner; 
+        _cache = cache;
+    }
 
-        var item = await _repository.GetByIdAsync(id, cancellationToken);
-        
-        if (item != null)
-        {
-            _cache.Set(cacheKey, item, _cacheExpiration);
-        }
+    public async Task<TodoItem?> GetByIdAsync(int id, CancellationToken ct = default)
+    {
+        var key = $"TodoItem:{id}";
+        if (_cache.TryGetValue(key, out TodoItem? cached))
+            return cached;
 
-        return item;
+        var entity = await _inner.GetByIdAsync(id, ct);
+        if (entity != null) 
+            _cache.Set(key, entity, Exp);
+        return entity;
     }
 }
 ```
+
+### Distributed Cache (Redis) Helper
+```csharp
+public static class CacheHelper
+{
+    public static async Task<T?> GetOrSetAsync<T>(
+        IDistributedCache cache, string key, TimeSpan ttl, Func<Task<T?>> factory, CancellationToken ct = default)
+        where T : class
+    {
+        var bytes = await cache.GetAsync(key, ct);
+        if (bytes != null)
+            return System.Text.Json.JsonSerializer.Deserialize<T>(bytes);
+
+        var value = await factory();
+        if (value != null)
+        {
+            var payload = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value);
+            await cache.SetAsync(key, payload, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = ttl
+            }, ct);
+        }
+        return value;
+    }
+}
+```
+
+### Cache Invalidation After SaveChanges
+```csharp
+public interface ICacheInvalidator 
+{ 
+    void Invalidate(params string[] keys); 
+}
+
+public class CacheInvalidatingDbContext : ApplicationDbContext
+{
+    private readonly ICacheInvalidator _invalidator;
+    
+    public CacheInvalidatingDbContext(DbContextOptions<ApplicationDbContext> o, ICacheInvalidator inv) : base(o) 
+    { 
+        _invalidator = inv; 
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        var affectedKeys = ChangeTracker.Entries()
+            .Where(e => e.State != EntityState.Unchanged)
+            .SelectMany(e => BuildKeysFromEntry(e)) // customize
+            .Distinct()
+            .ToArray();
+
+        var result = await base.SaveChangesAsync(ct);
+        _invalidator.Invalidate(affectedKeys);
+        return result;
+    }
+}
+```
+
+---
 
 ## 🔒 Database Security
 
@@ -513,6 +705,7 @@ public class CachedTodoItemRepository : ITodoItemRepository
 -- Enable RLS on tables
 ALTER TABLE "todo_items" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "todo_lists" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "fhir_resources" ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
 CREATE POLICY "users_can_view_own_todo_items" ON "todo_items"
@@ -527,6 +720,12 @@ CREATE POLICY "users_can_view_own_todo_items" ON "todo_items"
 
 CREATE POLICY "users_can_modify_own_todo_items" ON "todo_items"
     FOR ALL USING ("created_by" = current_user);
+
+CREATE POLICY "view_own_fhir_resource" ON "fhir_resources"
+    FOR SELECT USING ("created_by" = current_user);
+
+CREATE POLICY "modify_own_fhir_resource" ON "fhir_resources"
+    FOR ALL USING ("created_by" = current_user);
 ```
 
 ### Data Encryption
@@ -540,18 +739,70 @@ SET "ssn" = pgp_sym_encrypt("ssn", 'encryption_key_here')
 WHERE "ssn" IS NOT NULL;
 ```
 
-### Audit Logging
+---
+
+## 📝 Audit Logging
+
+### Application-Level Audit (EF Interceptor/SaveChanges hook)
+**Advantages**: Log at application layer, easy to add user/request context  
+**Disadvantages**: Missing if operations outside application
+
+```csharp
+public class AuditLog
+{
+    public long Id { get; set; }
+    public string TableName { get; set; } = default!;
+    public string Action { get; set; } = default!; // INSERT/UPDATE/DELETE
+    public string? RecordId { get; set; }
+    public string? OldValues { get; set; } // JSON
+    public string? NewValues { get; set; } // JSON
+    public string? ChangedBy { get; set; }
+    public DateTime ChangedAt { get; set; }
+}
+
+public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+{
+    var auditEntries = new List<AuditLog>();
+    foreach (var e in ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
+    {
+        var (oldVals, newVals) = GetAuditPayload(e); // serialize to JSON
+        auditEntries.Add(new AuditLog {
+            TableName = e.Metadata.GetTableName()!,
+            Action = e.State.ToString().ToUpperInvariant(),
+            RecordId = e.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey())?.CurrentValue?.ToString(),
+            OldValues = oldVals, 
+            NewValues = newVals,
+            ChangedBy = GetCurrentUserId(), 
+            ChangedAt = DateTime.UtcNow
+        });
+    }
+
+    var result = await base.SaveChangesAsync(ct);
+
+    if (auditEntries.Count > 0)
+    {
+        Set<AuditLog>().AddRange(auditEntries);
+        await base.SaveChangesAsync(ct);
+    }
+    return result;
+}
+```
+
+### Database-Level Audit (PostgreSQL Triggers)
+**Advantages**: **No missing** even if operations from outside app  
+**Disadvantages**: Hard to attach additional user context if not passing `current_user`/`app.user_id`
+
 ```sql
 -- Create audit table
 CREATE TABLE "audit_logs" (
-    "id" SERIAL PRIMARY KEY,
+    "id" BIGSERIAL PRIMARY KEY,
     "table_name" VARCHAR(100) NOT NULL,
     "action" VARCHAR(10) NOT NULL, -- INSERT, UPDATE, DELETE
-    "record_id" INTEGER,
+    "record_id" TEXT,
     "old_values" JSONB,
     "new_values" JSONB,
     "changed_by" VARCHAR(100),
-    "changed_at" TIMESTAMP NOT NULL DEFAULT NOW()
+    "changed_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Create audit trigger function
@@ -560,15 +811,15 @@ RETURNS TRIGGER AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
             INSERT INTO "audit_logs" ("table_name", "action", "record_id", "new_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'INSERT', NEW."id", to_jsonb(NEW), current_user);
+            VALUES (TG_TABLE_NAME, 'INSERT', NEW."id"::text, to_jsonb(NEW), current_user);
             RETURN NEW;
         ELSIF TG_OP = 'UPDATE' THEN
             INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "new_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'UPDATE', NEW."id", to_jsonb(OLD), to_jsonb(NEW), current_user);
+            VALUES (TG_TABLE_NAME, 'UPDATE', NEW."id"::text, to_jsonb(OLD), to_jsonb(NEW), current_user);
             RETURN NEW;
         ELSIF TG_OP = 'DELETE' THEN
             INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'DELETE', OLD."id", to_jsonb(OLD), current_user);
+            VALUES (TG_TABLE_NAME, 'DELETE', OLD."id"::text, to_jsonb(OLD), current_user);
             RETURN OLD;
         END IF;
         RETURN NULL;
@@ -579,9 +830,17 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER audit_todoitems_trigger
     AFTER INSERT OR UPDATE OR DELETE ON "todo_items"
     FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+
+CREATE TRIGGER audit_fhir_resources_trg
+    AFTER INSERT OR UPDATE OR DELETE ON "fhir_resources"
+    FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
 ```
 
-### Backup Strategy
+**Note**: Can store **diff** instead of full object using PL/pgSQL or process diff at application layer.
+
+---
+
+## 💾 Backup Strategy
 ```bash
 # Automated backup script
 #!/bin/bash
@@ -598,6 +857,171 @@ gzip $BACKUP_DIR/fhirai_$DATE.sql
 # Keep only last 7 days of backups
 find $BACKUP_DIR -name "fhirai_*.sql.gz" -mtime +7 -delete
 ```
+```
+
+---
+
+## 🔒 Database Security
+
+### Row Level Security (RLS)
+```sql
+-- Enable RLS on tables
+ALTER TABLE "todo_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "todo_lists" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "fhir_resources" ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "users_can_view_own_todo_items" ON "todo_items"
+    FOR SELECT USING (
+        "created_by" = current_user OR 
+        EXISTS (
+            SELECT 1 FROM "todo_lists" 
+            WHERE "id" = "todo_items"."list_id" 
+            AND "created_by" = current_user
+        )
+    );
+
+CREATE POLICY "users_can_modify_own_todo_items" ON "todo_items"
+    FOR ALL USING ("created_by" = current_user);
+
+CREATE POLICY "view_own_fhir_resource" ON "fhir_resources"
+    FOR SELECT USING ("created_by" = current_user);
+
+CREATE POLICY "modify_own_fhir_resource" ON "fhir_resources"
+    FOR ALL USING ("created_by" = current_user);
+```
+
+### Data Encryption
+```sql
+-- Column-level encryption (if needed)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Encrypt sensitive data
+UPDATE "users" 
+SET "ssn" = pgp_sym_encrypt("ssn", 'encryption_key_here')
+WHERE "ssn" IS NOT NULL;
+```
+
+---
+
+## �� Audit Logging
+
+### Application-Level Audit (EF Interceptor/SaveChanges hook)
+**Advantages**: Log at application layer, easy to add user/request context  
+**Disadvantages**: Missing if operations outside application
+
+```csharp
+public class AuditLog
+{
+    public long Id { get; set; }
+    public string TableName { get; set; } = default!;
+    public string Action { get; set; } = default!; // INSERT/UPDATE/DELETE
+    public string? RecordId { get; set; }
+    public string? OldValues { get; set; } // JSON
+    public string? NewValues { get; set; } // JSON
+    public string? ChangedBy { get; set; }
+    public DateTime ChangedAt { get; set; }
+}
+
+public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+{
+    var auditEntries = new List<AuditLog>();
+    foreach (var e in ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
+    {
+        var (oldVals, newVals) = GetAuditPayload(e); // serialize to JSON
+        auditEntries.Add(new AuditLog {
+            TableName = e.Metadata.GetTableName()!,
+            Action = e.State.ToString().ToUpperInvariant(),
+            RecordId = e.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey())?.CurrentValue?.ToString(),
+            OldValues = oldVals, 
+            NewValues = newVals,
+            ChangedBy = GetCurrentUserId(), 
+            ChangedAt = DateTime.UtcNow
+        });
+    }
+
+    var result = await base.SaveChangesAsync(ct);
+
+    if (auditEntries.Count > 0)
+    {
+        Set<AuditLog>().AddRange(auditEntries);
+        await base.SaveChangesAsync(ct);
+    }
+    return result;
+}
+```
+
+### Database-Level Audit (PostgreSQL Triggers)
+**Advantages**: **No missing** even if operations from outside app  
+**Disadvantages**: Hard to attach additional user context if not passing `current_user`/`app.user_id`
+
+```sql
+-- Create audit table
+CREATE TABLE "audit_logs" (
+    "id" BIGSERIAL PRIMARY KEY,
+    "table_name" VARCHAR(100) NOT NULL,
+    "action" VARCHAR(10) NOT NULL, -- INSERT, UPDATE, DELETE
+    "record_id" TEXT,
+    "old_values" JSONB,
+    "new_values" JSONB,
+    "changed_by" VARCHAR(100),
+    "changed_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create audit trigger function
+CREATE OR REPLACE FUNCTION audit_trigger_function()
+RETURNS TRIGGER AS $$
+    BEGIN
+        IF TG_OP = 'INSERT' THEN
+            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "new_values", "changed_by")
+            VALUES (TG_TABLE_NAME, 'INSERT', NEW."id"::text, to_jsonb(NEW), current_user);
+            RETURN NEW;
+        ELSIF TG_OP = 'UPDATE' THEN
+            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "new_values", "changed_by")
+            VALUES (TG_TABLE_NAME, 'UPDATE', NEW."id"::text, to_jsonb(OLD), to_jsonb(NEW), current_user);
+            RETURN NEW;
+        ELSIF TG_OP = 'DELETE' THEN
+            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "changed_by")
+            VALUES (TG_TABLE_NAME, 'DELETE', OLD."id"::text, to_jsonb(OLD), current_user);
+            RETURN OLD;
+        END IF;
+        RETURN NULL;
+    END;
+$$ LANGUAGE plpgsql;
+
+-- Create audit trigger
+CREATE TRIGGER audit_todoitems_trigger
+    AFTER INSERT OR UPDATE OR DELETE ON "todo_items"
+    FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+
+CREATE TRIGGER audit_fhir_resources_trg
+    AFTER INSERT OR UPDATE OR DELETE ON "fhir_resources"
+    FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+```
+
+**Note**: Can store **diff** instead of full object using PL/pgSQL or process diff at application layer.
+
+---
+
+## 💾 Backup Strategy
+```bash
+# Automated backup script
+#!/bin/bash
+BACKUP_DIR="/backups"
+DATE=$(date +%Y%m%d_%H%M%S)
+DB_NAME="fhirai"
+
+# Create backup
+pg_dump -h localhost -U postgres -d $DB_NAME > $BACKUP_DIR/fhirai_$DATE.sql
+
+# Compress backup
+gzip $BACKUP_DIR/fhirai_$DATE.sql
+
+# Keep only last 7 days of backups
+find $BACKUP_DIR -name "fhirai_*.sql.gz" -mtime +7 -delete
+```
+
+---
 
 ## 📋 **POSTGRESQL TABLE NAMING CONVENTIONS (CRITICAL FOR CURSOR AI)**
 
@@ -853,14 +1277,12 @@ public class NewEntityConfiguration : IEntityTypeConfiguration<NewEntity>
 
 ---
 
-**🎯 REMEMBER**: **ALWAYS use snake_case, Plural, Quoted names** for PostgreSQL tables in FHIRAI. This is **MANDATORY** for consistency and PostgreSQL compatibility.
-
 ## 🚨 Database Checklist
 
 ### Design
 - [ ] Normalized to 3NF
 - [ ] Proper relationships defined
-- [ ] Appropriate data types used
+- [ ] Appropriate data types used (including JSONB when needed)
 - [ ] Indexes created for performance
 - [ ] Constraints defined for data integrity
 
@@ -885,6 +1307,24 @@ public class NewEntityConfiguration : IEntityTypeConfiguration<NewEntity>
 - [ ] Caching strategy implemented
 - [ ] Performance monitoring in place
 
+### Caching
+- [ ] Choose cache model (cache-aside recommended)
+- [ ] Key naming + TTL + sliding
+- [ ] Invalidation after SaveChanges
+- [ ] Redis Pub/Sub for multiple instances
+
+### Audit
+- [ ] Choose app-level or DB trigger (or both)
+- [ ] Store JSON/JSONB; consider diff
+- [ ] Protect audit table (insert only)
+
 ---
 
 **🎯 Remember**: Database design is critical for application performance and data integrity. Always follow normalization principles, implement proper indexing, and ensure data security. Regular monitoring and optimization are essential for maintaining good performance.
+
+**Key Principles**:
+1. **Naming**: Always use snake_case, Plural, Quoted names for PostgreSQL tables
+2. **JSONB**: Use for flexible properties, metadata, FHIR payloads with GIN indexes
+3. **Performance**: Implement proper indexing, caching, and query optimization
+4. **Security**: Enable RLS, implement audit logging, and encrypt sensitive data
+5. **Migration**: Use safe migration strategies with idempotent scripts for CI/CD
