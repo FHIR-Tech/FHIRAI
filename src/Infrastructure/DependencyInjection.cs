@@ -1,17 +1,18 @@
-﻿using FHIRAI.Application.Common.Interfaces;
+﻿using System.Reflection;
+using FHIRAI.Application.Common.Interfaces;
 using FHIRAI.Domain.Constants;
+using FHIRAI.Domain.Repositories;
 using FHIRAI.Infrastructure.Data;
 using FHIRAI.Infrastructure.Data.Interceptors;
-using FHIRAI.Infrastructure.Identity;
-using FHIRAI.Domain.Repositories;
 using FHIRAI.Infrastructure.Data.Repositories;
+using FHIRAI.Infrastructure.Identity;
+using FHIRAI.Infrastructure.Identity.Models;
 using FHIRAI.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using FHIRAI.Infrastructure.Identity.Models;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -45,9 +46,18 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services
-            .AddIdentityCore<ApplicationUser>()
-            .AddRoles<IdentityRole>()
+        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                options.Password.RequiredLength = 6;
+                options.Password.RequireLowercase = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireDigit = false;
+
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
+                options.Lockout.MaxFailedAccessAttempts = 6;
+                options.Lockout.AllowedForNewUsers = true;
+            })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddApiEndpoints();
 
@@ -56,5 +66,35 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorization(options =>
             options.AddPolicy(Policies.CanPurge, policy => policy.RequireRole(Roles.Administrator)));
+
+        #region Repository
+        builder.Services.AddRepositories(Assembly.GetExecutingAssembly());
+        #endregion
+    }
+
+    /// <summary>
+    /// Đăng ký tự động các class có đuôi tên kết thúc Repositorty và có kế thừa từ IRepository
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="assembly"></param>
+    private static void AddRepositories(this IServiceCollection services, Assembly assembly)
+    {
+        // Lấy tất cả các class trong assembly có tên kết thúc bằng "Repository"
+        // và loại bỏ các class generic như RepositoryBase<>
+        var repositoryTypes = assembly.GetTypes()
+            .Where(t => t.IsClass
+                        && !t.IsAbstract
+                        && !t.IsGenericType
+                        && t.Name.EndsWith("Repository"));
+
+        foreach (var impl in repositoryTypes)
+        {
+            // Tìm interface có tên "I" + tên class, ví dụ: ILanguageRepository cho LanguageRepository
+            var interfaceType = impl.GetInterface("I" + impl.Name);
+            if (interfaceType != null)
+            {
+                services.AddScoped(interfaceType, impl);
+            }
+        }
     }
 }
