@@ -13,20 +13,6 @@ namespace FHIRAI.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ApplicationRoles",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    NormalizedName = table.Column<string>(type: "text", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationRoles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ApplicationUsers",
                 columns: table => new
                 {
@@ -364,100 +350,6 @@ namespace FHIRAI.Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "ApplicationUserClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationUserClaims", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserClaims_AspNetUserClaims_Id",
-                        column: x => x.Id,
-                        principalTable: "AspNetUserClaims",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ApplicationUserLogins",
-                columns: table => new
-                {
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    ProviderKey = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationUserLogins", x => new { x.LoginProvider, x.ProviderKey });
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserLogins_AspNetUserLogins_LoginProvider_Provid~",
-                        columns: x => new { x.LoginProvider, x.ProviderKey },
-                        principalTable: "AspNetUserLogins",
-                        principalColumns: new[] { "LoginProvider", "ProviderKey" },
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ApplicationUserTokens",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    LoginProvider = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserTokens_AspNetUserTokens_UserId_LoginProvider~",
-                        columns: x => new { x.UserId, x.LoginProvider, x.Name },
-                        principalTable: "AspNetUserTokens",
-                        principalColumns: new[] { "UserId", "LoginProvider", "Name" },
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ApplicationRoleClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationRoleClaims", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ApplicationRoleClaims_AspNetRoleClaims_Id",
-                        column: x => x.Id,
-                        principalTable: "AspNetRoleClaims",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ApplicationUserRoles",
-                columns: table => new
-                {
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    RoleId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationUserRoles", x => new { x.UserId, x.RoleId });
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserRoles_AspNetUserRoles_UserId_RoleId",
-                        columns: x => new { x.UserId, x.RoleId },
-                        principalTable: "AspNetUserRoles",
-                        principalColumns: new[] { "UserId", "RoleId" },
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ApplicationUserRoles_RoleId",
-                table: "ApplicationUserRoles",
-                column: "RoleId");
-
             migrationBuilder.CreateIndex(
                 name: "EmailIndex",
                 table: "ApplicationUsers",
@@ -744,36 +636,6 @@ namespace FHIRAI.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ApplicationRoleClaims");
-
-            migrationBuilder.DropTable(
-                name: "ApplicationRoles");
-
-            migrationBuilder.DropTable(
-                name: "ApplicationUserClaims");
-
-            migrationBuilder.DropTable(
-                name: "ApplicationUserLogins");
-
-            migrationBuilder.DropTable(
-                name: "ApplicationUserRoles");
-
-            migrationBuilder.DropTable(
-                name: "ApplicationUserTokens");
-
-            migrationBuilder.DropTable(
-                name: "fhir_resources");
-
-            migrationBuilder.DropTable(
-                name: "patient_accesses");
-
-            migrationBuilder.DropTable(
-                name: "patient_consents");
-
-            migrationBuilder.DropTable(
-                name: "todo_items");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -789,16 +651,28 @@ namespace FHIRAI.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "patients");
+                name: "fhir_resources");
 
             migrationBuilder.DropTable(
-                name: "todo_lists");
+                name: "patient_accesses");
+
+            migrationBuilder.DropTable(
+                name: "patient_consents");
+
+            migrationBuilder.DropTable(
+                name: "todo_items");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "ApplicationUsers");
+
+            migrationBuilder.DropTable(
+                name: "patients");
+
+            migrationBuilder.DropTable(
+                name: "todo_lists");
         }
     }
 }

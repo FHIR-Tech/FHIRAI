@@ -1,0 +1,7 @@
+psql -h 127.0.0.1 -U postgres -c "DROP DATABASE IF EXISTS \"FHIRAIDb\";"
+psql -h 127.0.0.1 -U postgres -d FHIRAIDb -c "\dt"
+
+dotnet ef migrations add InitialCreate --project src/Infrastructure --startup-project src/Web
+
+
+

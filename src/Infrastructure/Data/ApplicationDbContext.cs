@@ -26,18 +26,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IApplica
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
         /// <returns></returns>
-        public new DbSet<TEntity> Set<TEntity>()
-            where TEntity : BaseEntity
-            => base.Set<TEntity>();
+        // public new DbSet<TEntity> Set<TEntity>()
+        //     where TEntity : BaseEntity
+        //     => base.Set<TEntity>();
 
         #region Identity
-        public DbSet<ApplicationRole> ApplicationRoles { get; set; }
-        public DbSet<ApplicationRoleClaim> ApplicationRoleClaims { get; set; }
-        public DbSet<ApplicationUser> ApplicationUsers { get; set; }
-        public DbSet<ApplicationUserClaim> ApplicationUserClaims { get; set; }
-        public DbSet<ApplicationUserLogin> ApplicationUserLogins { get; set; }
-        public DbSet<ApplicationUserRole> ApplicationUserRoles { get; set; }
-        public DbSet<ApplicationUserToken> ApplicationUserTokens { get; set; }
+        // public DbSet<ApplicationRole> ApplicationRoles { get; set; }
+        // public DbSet<ApplicationRoleClaim> ApplicationRoleClaims { get; set; }
+        // public DbSet<ApplicationUser> ApplicationUsers { get; set; }
+        // public DbSet<ApplicationUserClaim> ApplicationUserClaims { get; set; }
+        // public DbSet<ApplicationUserLogin> ApplicationUserLogins { get; set; }
+        // public DbSet<ApplicationUserRole> ApplicationUserRoles { get; set; }
+        // public DbSet<ApplicationUserToken> ApplicationUserTokens { get; set; }
         #endregion
 
     protected override void OnModelCreating(ModelBuilder builder)

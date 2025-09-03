@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FHIRAI.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250903110104_InitialCreate")]
+    [Migration("20250903143224_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -748,25 +748,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.ToTable("todo_lists", (string)null);
                 });
 
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("text");
-
-                    b.Property<string>("NormalizedName")
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ApplicationRoles", (string)null);
-                });
-
             modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -880,8 +861,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -907,8 +886,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AspNetUserClaims", (string)null);
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -931,8 +908,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AspNetUserLogins", (string)null);
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -948,8 +923,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -969,43 +942,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-
-                    b.UseTptMappingStrategy();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationRoleClaim", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>");
-
-                    b.ToTable("ApplicationRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserClaim", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>");
-
-                    b.ToTable("ApplicationUserClaims", (string)null);
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserLogin", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>");
-
-                    b.ToTable("ApplicationUserLogins", (string)null);
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserRole", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserRole<string>");
-
-                    b.ToTable("ApplicationUserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserToken", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUserToken<string>");
-
-                    b.ToTable("ApplicationUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("FHIRAI.Domain.Entities.PatientAccess", b =>
@@ -1116,51 +1052,6 @@ namespace FHIRAI.Infrastructure.Migrations
                     b.HasOne("FHIRAI.Infrastructure.Identity.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationRoleClaim", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", null)
-                        .WithOne()
-                        .HasForeignKey("FHIRAI.Infrastructure.Identity.Models.ApplicationRoleClaim", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserClaim", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", null)
-                        .WithOne()
-                        .HasForeignKey("FHIRAI.Infrastructure.Identity.Models.ApplicationUserClaim", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserLogin", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", null)
-                        .WithOne()
-                        .HasForeignKey("FHIRAI.Infrastructure.Identity.Models.ApplicationUserLogin", "LoginProvider", "ProviderKey")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserRole", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", null)
-                        .WithOne()
-                        .HasForeignKey("FHIRAI.Infrastructure.Identity.Models.ApplicationUserRole", "UserId", "RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("FHIRAI.Infrastructure.Identity.Models.ApplicationUserToken", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", null)
-                        .WithOne()
-                        .HasForeignKey("FHIRAI.Infrastructure.Identity.Models.ApplicationUserToken", "UserId", "LoginProvider", "Name")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

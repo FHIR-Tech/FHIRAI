@@ -46,7 +46,13 @@ public static class DependencyInjection
 
         builder.Services.AddAuthorizationBuilder();
 
-        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+        // builder.Services
+        //     .AddIdentityCore<ApplicationUser>()
+        //     .AddRoles<IdentityRole>()
+        //     .AddEntityFrameworkStores<ApplicationDbContext>()
+        //     .AddApiEndpoints();
+
+        builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 6;
                 options.Password.RequireLowercase = false;
