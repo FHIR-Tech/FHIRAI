@@ -5,6 +5,66 @@
 
 ---
 
+## 🏗️ Base Entity Structure
+
+### BaseEntity Pattern
+FHIRAI sử dụng pattern kế thừa cho entities với cấu trúc rõ ràng:
+
+```csharp
+// Base entity với Guid Id
+public abstract class BaseEntity
+{
+    public Guid Id { get; set; }
+}
+
+// Base auditable entity kế thừa BaseEntity
+public abstract class BaseAuditableEntity : BaseEntity
+{
+    public DateTimeOffset CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTimeOffset LastModifiedAt { get; set; }
+    public string? LastModifiedBy { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
+    public string? DeletedBy { get; set; }
+}
+
+// Entity cụ thể kế thừa BaseAuditableEntity
+public class TodoItem : BaseAuditableEntity
+{
+    public string Title { get; set; } = default!;
+    public string? Note { get; set; }
+    public bool Done { get; set; }
+    public PriorityLevel Priority { get; set; }
+    public Guid ListId { get; set; }
+    public TodoList List { get; set; } = default!;
+}
+```
+
+### Database Schema cho Base Entities
+```sql
+-- Tất cả bảng đều có cấu trúc audit cơ bản
+CREATE TABLE "todo_items" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "title" VARCHAR(200) NOT NULL,
+    "note" VARCHAR(1000),
+    "done" BOOLEAN NOT NULL DEFAULT FALSE,
+    "priority" INTEGER NOT NULL DEFAULT 1,
+    "list_id" UUID NOT NULL,
+    -- Audit fields
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "created_by" VARCHAR(100),
+    "last_modified_at" TIMESTAMPTZ,
+    "last_modified_by" VARCHAR(100),
+    "is_deleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "deleted_at" TIMESTAMPTZ,
+    "deleted_by" VARCHAR(100),
+    FOREIGN KEY ("list_id") REFERENCES "todo_lists"("id") ON DELETE CASCADE
+);
+```
+
+---
+
 ## 🗄️ Database Design Principles
 
 ### Normalization
@@ -13,24 +73,32 @@ FHIRAI tuân thủ 3NF (Third Normal Form) để đảm bảo data integrity:
 ```sql
 -- ✅ Normalized design with snake_case naming
 CREATE TABLE "todo_lists" (
-    "id" SERIAL PRIMARY KEY,
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "title" VARCHAR(200) NOT NULL,
     "colour_code" VARCHAR(7) NOT NULL,
-    "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    "created_by" VARCHAR(100)
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "created_by" VARCHAR(100),
+    "last_modified_at" TIMESTAMPTZ,
+    "last_modified_by" VARCHAR(100),
+    "is_deleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "deleted_at" TIMESTAMPTZ,
+    "deleted_by" VARCHAR(100)
 );
 
 CREATE TABLE "todo_items" (
-    "id" SERIAL PRIMARY KEY,
-    "list_id" INTEGER NOT NULL,
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "list_id" UUID NOT NULL,
     "title" VARCHAR(200) NOT NULL,
     "done" BOOLEAN NOT NULL DEFAULT FALSE,
     "priority" INTEGER NOT NULL DEFAULT 1,
     "note" VARCHAR(1000),
-    "created" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "created_by" VARCHAR(100),
-    "last_modified" TIMESTAMPTZ,
+    "last_modified_at" TIMESTAMPTZ,
     "last_modified_by" VARCHAR(100),
+    "is_deleted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "deleted_at" TIMESTAMPTZ,
+    "deleted_by" VARCHAR(100),
     FOREIGN KEY ("list_id") REFERENCES "todo_lists"("id") ON DELETE CASCADE
 );
 ```
@@ -86,15 +154,20 @@ CREATE TABLE "user_roles" (
 ```sql
 -- PostgreSQL-specific data types
 CREATE TABLE "example_table" (
-    "id" SERIAL PRIMARY KEY,                    -- Auto-incrementing integer
-    "title" VARCHAR(200) NOT NULL,              -- Variable-length string with limit
-    "description" TEXT,                         -- Unlimited text
-    "price" DECIMAL(10,2),                     -- Precise decimal
-    "created_date" TIMESTAMPTZ NOT NULL,        -- Date and time with timezone (UTC)
-    "is_active" BOOLEAN NOT NULL DEFAULT TRUE,  -- Boolean
-    "tags" TEXT[],                             -- Array of text
-    "metadata" JSONB,                          -- JSON data with GIN index
-    "binary_data" BYTEA                        -- Binary data
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- GUID primary key
+    "title" VARCHAR(200) NOT NULL,                   -- Variable-length string with limit
+    "description" TEXT,                              -- Unlimited text
+    "price" DECIMAL(10,2),                          -- Precise decimal
+    "created_at" TIMESTAMPTZ NOT NULL,              -- Date and time with timezone (UTC)
+    "created_by" VARCHAR(100),                      -- User who created the record
+    "last_modified_at" TIMESTAMPTZ,                 -- Last modification timestamp
+    "last_modified_by" VARCHAR(100),                -- User who last modified
+    "is_deleted" BOOLEAN NOT NULL DEFAULT FALSE,    -- Soft delete flag
+    "deleted_at" TIMESTAMPTZ,                       -- Soft delete timestamp
+    "deleted_by" VARCHAR(100),                      -- User who deleted
+    "tags" TEXT[],                                  -- Array of text
+    "metadata" JSONB,                               -- JSON data with GIN index
+    "binary_data" BYTEA                             -- Binary data
 );
 ```
 
@@ -149,20 +222,32 @@ public class TodoItemConfiguration : IEntityTypeConfiguration<TodoItem>
         builder.HasIndex(x => new { x.ListId, x.Done });
         builder.HasIndex(x => new { x.ListId, x.Priority });
 
-        // Audit properties with explicit column mapping
-        builder.Property(x => x.Created)
-            .HasColumnName("created")
+        // Audit properties inherited from BaseAuditableEntity
+        builder.Property(x => x.CreatedAt)
+            .HasColumnName("created_at")
             .IsRequired();
 
         builder.Property(x => x.CreatedBy)
             .HasColumnName("created_by")
             .HasMaxLength(100);
 
-        builder.Property(x => x.LastModified)
-            .HasColumnName("last_modified");
+        builder.Property(x => x.LastModifiedAt)
+            .HasColumnName("last_modified_at");
 
         builder.Property(x => x.LastModifiedBy)
             .HasColumnName("last_modified_by")
+            .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+            .HasColumnName("is_deleted")
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(x => x.DeletedAt)
+            .HasColumnName("deleted_at");
+
+        builder.Property(x => x.DeletedBy)
+            .HasColumnName("deleted_by")
             .HasMaxLength(100);
     }
 }
@@ -198,20 +283,32 @@ public class FhirResourceConfiguration : IEntityTypeConfiguration<FhirResource>
                .HasColumnType("jsonb")
                .IsRequired();
 
-        // Audit properties
-        builder.Property(x => x.Created)
-               .HasColumnName("created")
+        // Audit properties inherited from BaseAuditableEntity
+        builder.Property(x => x.CreatedAt)
+               .HasColumnName("created_at")
                .IsRequired();
 
         builder.Property(x => x.CreatedBy)
                .HasColumnName("created_by")
                .HasMaxLength(100);
 
-        builder.Property(x => x.LastModified)
-               .HasColumnName("last_modified");
+        builder.Property(x => x.LastModifiedAt)
+               .HasColumnName("last_modified_at");
 
         builder.Property(x => x.LastModifiedBy)
                .HasColumnName("last_modified_by")
+               .HasMaxLength(100);
+
+        builder.Property(x => x.IsDeleted)
+               .HasColumnName("is_deleted")
+               .IsRequired()
+               .HasDefaultValue(false);
+
+        builder.Property(x => x.DeletedAt)
+               .HasColumnName("deleted_at");
+
+        builder.Property(x => x.DeletedBy)
+               .HasColumnName("deleted_by")
                .HasMaxLength(100);
 
         // Indexes
@@ -353,13 +450,13 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
         {
             if (entry.State == EntityState.Added)
             {
-                entry.Entity.Created = DateTime.UtcNow;
+                entry.Entity.CreatedAt = DateTimeOffset.UtcNow;
                 entry.Entity.CreatedBy = GetCurrentUserId();
             }
 
             if (entry.State == EntityState.Modified)
             {
-                entry.Entity.LastModified = DateTime.UtcNow;
+                entry.Entity.LastModifiedAt = DateTimeOffset.UtcNow;
                 entry.Entity.LastModifiedBy = GetCurrentUserId();
             }
         }
@@ -396,12 +493,16 @@ public partial class CreateTodoItems_20241201 : Migration
             name: "todo_lists",
             columns: table => new
             {
-                id = table.Column<int>(type: "integer", nullable: false)
-                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                id = table.Column<Guid>(type: "uuid", nullable: false),
                 title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                 colour_code = table.Column<string>(type: "character varying(7)", maxLength: 7, nullable: false),
-                created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true)
+                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                last_modified_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                last_modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                deleted_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                deleted_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true)
             },
             constraints: table =>
             {
@@ -412,17 +513,19 @@ public partial class CreateTodoItems_20241201 : Migration
             name: "todo_items",
             columns: table => new
             {
-                id = table.Column<int>(type: "integer", nullable: false)
-                    .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                list_id = table.Column<int>(type: "integer", nullable: false),
+                id = table.Column<Guid>(type: "uuid", nullable: false),
+                list_id = table.Column<Guid>(type: "uuid", nullable: false),
                 title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                 done = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                 priority = table.Column<int>(type: "integer", nullable: false, defaultValue: 1),
                 note = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                created = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                 created_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                last_modified = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                last_modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true)
+                last_modified_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                last_modified_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                is_deleted = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                deleted_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                deleted_by = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true)
             },
             constraints: table =>
             {
@@ -481,26 +584,26 @@ public partial class SeedInitialData_20241201 : Migration
         // Seed todo_lists
         migrationBuilder.InsertData(
             table: "todo_lists",
-            columns: new[] { "title", "colour_code", "created", "created_by" },
+            columns: new[] { "title", "colour_code", "created_at", "created_by", "is_deleted" },
             values: new object[,]
             {
-                { "Shopping List", "#FF0000", DateTime.UtcNow, "system" },
-                { "Work Tasks", "#0000FF", DateTime.UtcNow, "system" },
-                { "Personal Goals", "#008000", DateTime.UtcNow, "system" }
+                { "Shopping List", "#FF0000", DateTimeOffset.UtcNow, "system", false },
+                { "Work Tasks", "#0000FF", DateTimeOffset.UtcNow, "system", false },
+                { "Personal Goals", "#008000", DateTimeOffset.UtcNow, "system", false }
             });
 
         // Seed todo_items
         migrationBuilder.InsertData(
             table: "todo_items",
-            columns: new[] { "list_id", "title", "done", "priority", "created", "created_by" },
+            columns: new[] { "list_id", "title", "done", "priority", "created_at", "created_by", "is_deleted" },
             values: new object[,]
             {
-                { 1, "Buy groceries", false, 1, DateTime.UtcNow, "system" },
-                { 1, "Get gas", false, 2, DateTime.UtcNow, "system" },
-                { 2, "Review code", false, 1, DateTime.UtcNow, "system" },
-                { 2, "Write documentation", false, 2, DateTime.UtcNow, "system" },
-                { 3, "Exercise", false, 1, DateTime.UtcNow, "system" },
-                { 3, "Read book", false, 2, DateTime.UtcNow, "system" }
+                { Guid.Parse("11111111-1111-1111-1111-111111111111"), "Buy groceries", false, 1, DateTimeOffset.UtcNow, "system", false },
+                { Guid.Parse("11111111-1111-1111-1111-111111111111"), "Get gas", false, 2, DateTimeOffset.UtcNow, "system", false },
+                { Guid.Parse("22222222-2222-2222-2222-222222222222"), "Review code", false, 1, DateTimeOffset.UtcNow, "system", false },
+                { Guid.Parse("22222222-2222-2222-2222-222222222222"), "Write documentation", false, 2, DateTimeOffset.UtcNow, "system", false },
+                { Guid.Parse("33333333-3333-3333-3333-333333333333"), "Exercise", false, 1, DateTimeOffset.UtcNow, "system", false },
+                { Guid.Parse("33333333-3333-3333-3333-333333333333"), "Read book", false, 2, DateTimeOffset.UtcNow, "system", false }
             });
     }
 
@@ -748,16 +851,15 @@ WHERE "ssn" IS NOT NULL;
 **Disadvantages**: Missing if operations outside application
 
 ```csharp
-public class AuditLog
+public class AuditLog : BaseEntity
 {
-    public long Id { get; set; }
     public string TableName { get; set; } = default!;
     public string Action { get; set; } = default!; // INSERT/UPDATE/DELETE
     public string? RecordId { get; set; }
     public string? OldValues { get; set; } // JSON
     public string? NewValues { get; set; } // JSON
     public string? ChangedBy { get; set; }
-    public DateTime ChangedAt { get; set; }
+    public DateTimeOffset ChangedAt { get; set; }
 }
 
 public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
@@ -773,7 +875,7 @@ public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
             OldValues = oldVals, 
             NewValues = newVals,
             ChangedBy = GetCurrentUserId(), 
-            ChangedAt = DateTime.UtcNow
+            ChangedAt = DateTimeOffset.UtcNow
         });
     }
 
@@ -795,170 +897,7 @@ public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
 ```sql
 -- Create audit table
 CREATE TABLE "audit_logs" (
-    "id" BIGSERIAL PRIMARY KEY,
-    "table_name" VARCHAR(100) NOT NULL,
-    "action" VARCHAR(10) NOT NULL, -- INSERT, UPDATE, DELETE
-    "record_id" TEXT,
-    "old_values" JSONB,
-    "new_values" JSONB,
-    "changed_by" VARCHAR(100),
-    "changed_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Create audit trigger function
-CREATE OR REPLACE FUNCTION audit_trigger_function()
-RETURNS TRIGGER AS $$
-    BEGIN
-        IF TG_OP = 'INSERT' THEN
-            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "new_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'INSERT', NEW."id"::text, to_jsonb(NEW), current_user);
-            RETURN NEW;
-        ELSIF TG_OP = 'UPDATE' THEN
-            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "new_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'UPDATE', NEW."id"::text, to_jsonb(OLD), to_jsonb(NEW), current_user);
-            RETURN NEW;
-        ELSIF TG_OP = 'DELETE' THEN
-            INSERT INTO "audit_logs" ("table_name", "action", "record_id", "old_values", "changed_by")
-            VALUES (TG_TABLE_NAME, 'DELETE', OLD."id"::text, to_jsonb(OLD), current_user);
-            RETURN OLD;
-        END IF;
-        RETURN NULL;
-    END;
-$$ LANGUAGE plpgsql;
-
--- Create audit trigger
-CREATE TRIGGER audit_todoitems_trigger
-    AFTER INSERT OR UPDATE OR DELETE ON "todo_items"
-    FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-
-CREATE TRIGGER audit_fhir_resources_trg
-    AFTER INSERT OR UPDATE OR DELETE ON "fhir_resources"
-    FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-```
-
-**Note**: Can store **diff** instead of full object using PL/pgSQL or process diff at application layer.
-
----
-
-## 💾 Backup Strategy
-```bash
-# Automated backup script
-#!/bin/bash
-BACKUP_DIR="/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="fhirai"
-
-# Create backup
-pg_dump -h localhost -U postgres -d $DB_NAME > $BACKUP_DIR/fhirai_$DATE.sql
-
-# Compress backup
-gzip $BACKUP_DIR/fhirai_$DATE.sql
-
-# Keep only last 7 days of backups
-find $BACKUP_DIR -name "fhirai_*.sql.gz" -mtime +7 -delete
-```
-```
-
----
-
-## 🔒 Database Security
-
-### Row Level Security (RLS)
-```sql
--- Enable RLS on tables
-ALTER TABLE "todo_items" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "todo_lists" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "fhir_resources" ENABLE ROW LEVEL SECURITY;
-
--- Create policies
-CREATE POLICY "users_can_view_own_todo_items" ON "todo_items"
-    FOR SELECT USING (
-        "created_by" = current_user OR 
-        EXISTS (
-            SELECT 1 FROM "todo_lists" 
-            WHERE "id" = "todo_items"."list_id" 
-            AND "created_by" = current_user
-        )
-    );
-
-CREATE POLICY "users_can_modify_own_todo_items" ON "todo_items"
-    FOR ALL USING ("created_by" = current_user);
-
-CREATE POLICY "view_own_fhir_resource" ON "fhir_resources"
-    FOR SELECT USING ("created_by" = current_user);
-
-CREATE POLICY "modify_own_fhir_resource" ON "fhir_resources"
-    FOR ALL USING ("created_by" = current_user);
-```
-
-### Data Encryption
-```sql
--- Column-level encryption (if needed)
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
--- Encrypt sensitive data
-UPDATE "users" 
-SET "ssn" = pgp_sym_encrypt("ssn", 'encryption_key_here')
-WHERE "ssn" IS NOT NULL;
-```
-
----
-
-## �� Audit Logging
-
-### Application-Level Audit (EF Interceptor/SaveChanges hook)
-**Advantages**: Log at application layer, easy to add user/request context  
-**Disadvantages**: Missing if operations outside application
-
-```csharp
-public class AuditLog
-{
-    public long Id { get; set; }
-    public string TableName { get; set; } = default!;
-    public string Action { get; set; } = default!; // INSERT/UPDATE/DELETE
-    public string? RecordId { get; set; }
-    public string? OldValues { get; set; } // JSON
-    public string? NewValues { get; set; } // JSON
-    public string? ChangedBy { get; set; }
-    public DateTime ChangedAt { get; set; }
-}
-
-public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
-{
-    var auditEntries = new List<AuditLog>();
-    foreach (var e in ChangeTracker.Entries().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
-    {
-        var (oldVals, newVals) = GetAuditPayload(e); // serialize to JSON
-        auditEntries.Add(new AuditLog {
-            TableName = e.Metadata.GetTableName()!,
-            Action = e.State.ToString().ToUpperInvariant(),
-            RecordId = e.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey())?.CurrentValue?.ToString(),
-            OldValues = oldVals, 
-            NewValues = newVals,
-            ChangedBy = GetCurrentUserId(), 
-            ChangedAt = DateTime.UtcNow
-        });
-    }
-
-    var result = await base.SaveChangesAsync(ct);
-
-    if (auditEntries.Count > 0)
-    {
-        Set<AuditLog>().AddRange(auditEntries);
-        await base.SaveChangesAsync(ct);
-    }
-    return result;
-}
-```
-
-### Database-Level Audit (PostgreSQL Triggers)
-**Advantages**: **No missing** even if operations from outside app  
-**Disadvantages**: Hard to attach additional user context if not passing `current_user`/`app.user_id`
-
-```sql
--- Create audit table
-CREATE TABLE "audit_logs" (
-    "id" BIGSERIAL PRIMARY KEY,
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "table_name" VARCHAR(100) NOT NULL,
     "action" VARCHAR(10) NOT NULL, -- INSERT, UPDATE, DELETE
     "record_id" TEXT,
@@ -1249,11 +1188,14 @@ public class NewEntityConfiguration : IEntityTypeConfiguration<NewEntity>
         // JSONB GIN index
         builder.HasIndex(x => x.Metadata).HasMethod("gin");
 
-        // Audit properties
+        // Audit properties inherited from BaseAuditableEntity
         builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.CreatedBy).HasMaxLength(100);
         builder.Property(x => x.LastModifiedAt);
         builder.Property(x => x.LastModifiedBy).HasMaxLength(100);
+        builder.Property(x => x.IsDeleted).IsRequired().HasDefaultValue(false);
+        builder.Property(x => x.DeletedAt);
+        builder.Property(x => x.DeletedBy).HasMaxLength(100);
     }
 }
 ```
