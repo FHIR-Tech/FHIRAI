@@ -1,0 +1,67 @@
+# TodoItems REST API Testing
+# Based on _TEMPLATE.http template
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+@Web_HostAddress = https://localhost:5001
+@BearerToken = <YourToken>
+
+# Resource-specific variables
+@TodoId = <todo-id>
+@TodoVersion = <version-id>
+
+# Authentication variables
+@Email = administrator@localhost
+@Password = Administrator1!
+
+### @name health_check
+GET {{Web_HostAddress}}/health
+Accept: application/json
+
+### @name auth_login
+POST {{Web_HostAddress}}/api/Auth/Login
+Content-Type: application/json
+
+{
+  "email": "{{Email}}",
+  "password": "{{Password}}"
+}
+
+### @name todo_search
+GET {{Web_HostAddress}}/api/todoitems?page=1&pageSize=20
+Authorization: Bearer {{BearerToken}}
+Accept: application/json
+
+### @name todo_create
+POST {{Web_HostAddress}}/api/todoitems
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Test Todo Item",
+  "description": "This is a test todo item for endpoint testing",
+  "priority": 1,
+  "isCompleted": false
+}
+
+### @name todo_read
+GET {{Web_HostAddress}}/api/todoitems/{{TodoId}}
+Authorization: Bearer {{BearerToken}}
+Accept: application/json
+
+### @name todo_update
+PUT {{Web_HostAddress}}/api/todoitems/{{TodoId}}
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "title": "Updated Todo Item",
+  "description": "This todo item has been updated during testing",
+  "priority": 2,
+  "isCompleted": true
+}
+
+### @name todo_delete
+DELETE {{Web_HostAddress}}/api/todoitems/{{TodoId}}
+Authorization: Bearer {{BearerToken}}

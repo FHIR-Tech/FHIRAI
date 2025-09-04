@@ -96,6 +96,7 @@ Always respond with the standardized format from optimized rule:
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Common patterns and commands
 - **Implementation Checklist**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step implementation guide
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+- **Endpoint Testing**: `ENDPOINT_CHECKS.md` - Endpoint testing and validation procedures
 
 ## 🎯 **KEY PRINCIPLES**
 

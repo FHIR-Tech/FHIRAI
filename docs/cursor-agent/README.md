@@ -23,6 +23,7 @@ docs/cursor-agent/
 │   ├── CURSOR_AI_QUICK_REFERENCE.md # Quick reference guide
 │   ├── IMPLEMENTATION_CHECKLIST.md  # Implementation checklists
 │   ├── LOGGING_GUIDE.md            # Centralized logging guide
+│   ├── ENDPOINT_CHECKS.md          # Endpoint testing and validation procedures
 │   └── DOCUMENTATION_STRUCTURE.md # AI Navigation Guide
 ├── reports/                     # Implementation reports
 │   └── template_implementation_report.md # Report template
@@ -56,6 +57,7 @@ Contains the core rules and guidelines that Cursor AI follows when working with 
 - **Database**: `DATABASE_GUIDE.md` - Database patterns and optimization
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Fast access to common patterns
 - **Implementation**: `IMPLEMENTATION_CHECKLIST.md` - Step-by-step guides for feature development
+- **Endpoint Testing**: `ENDPOINT_CHECKS.md` - Endpoint testing and validation procedures
 - **Documentation**: `DOCUMENTATION_STRUCTURE.md` - AI Navigation Guide for efficient project navigation
 
 ### Reports Directory

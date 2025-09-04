@@ -174,6 +174,7 @@ az login && azd up
 - **Cursor AI Rules**: `CURSOR_AI_RULES.md` - Core development rules and guidelines
 - **Quick Reference**: `CURSOR_AI_QUICK_REFERENCE.md` - Quick reference for common patterns
 - **Documentation Structure**: `DOCUMENTATION_STRUCTURE.md` - AI navigation guide
+- **Endpoint Testing**: `ENDPOINT_CHECKS.md` - Endpoint testing and validation procedures
 
 ## 🎯 **IMPLEMENTATION WORKFLOW**
 

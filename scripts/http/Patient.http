@@ -1,0 +1,86 @@
+# Patient FHIR Resource Testing
+# Based on _FHIR_TEMPLATE.http template
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+@Web_HostAddress = https://localhost:5001
+@BearerToken = <YourToken>
+
+# FHIR-specific variables
+@PatientId = <patient-id>
+@PatientVersion = <version-id>
+@IdSystem = https://example.org/mrn
+@IdValue = MRN-00001
+
+### @name patient_capabilities
+GET {{Web_HostAddress}}/fhir/metadata
+Accept: application/fhir+json
+
+### @name patient_search
+GET {{Web_HostAddress}}/fhir/Patient?_count=10
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json
+
+### @name patient_create
+POST {{Web_HostAddress}}/fhir/Patient
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/fhir+json
+Accept: application/fhir+json
+Prefer: return=representation
+
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "{{IdSystem}}",
+      "value": "{{IdValue}}"
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "text": "John Doe"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1990-01-01"
+}
+
+### @name patient_read
+GET {{Web_HostAddress}}/fhir/Patient/{{PatientId}}
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json
+
+### @name patient_update
+PUT {{Web_HostAddress}}/fhir/Patient/{{PatientId}}
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/fhir+json
+Accept: application/fhir+json
+If-Match: W/"{{PatientVersion}}"
+
+{
+  "resourceType": "Patient",
+  "id": "{{PatientId}}",
+  "identifier": [
+    {
+      "system": "{{IdSystem}}",
+      "value": "{{IdValue}}"
+    }
+  ],
+  "name": [
+    {
+      "use": "official",
+      "text": "John Doe Updated"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1990-01-01"
+}
+
+### @name patient_delete
+DELETE {{Web_HostAddress}}/fhir/Patient/{{PatientId}}
+Authorization: Bearer {{BearerToken}}
+
+### @name patient_history
+GET {{Web_HostAddress}}/fhir/Patient/{{PatientId}}/_history
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json

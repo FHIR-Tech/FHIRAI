@@ -1,0 +1,69 @@
+# FHIR Template for testing FHIR-compliant endpoints
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+@Web_HostAddress = https://localhost:5001
+@BearerToken = <YourToken>
+
+# FHIR-specific variables
+@ResourceId = <resource-id>
+@ResourceVersion = <version-id>
+@IdSystem = https://example.org/mrn
+@IdValue = MRN-00001
+
+### @name fhir_capabilities
+GET {{Web_HostAddress}}/fhir/metadata
+Accept: application/fhir+json
+
+### @name resource_search
+GET {{Web_HostAddress}}/fhir/Resource?_count=10
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json
+
+### @name resource_create
+POST {{Web_HostAddress}}/fhir/Resource
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/fhir+json
+Accept: application/fhir+json
+Prefer: return=representation
+
+{
+  "resourceType": "Resource",
+  "identifier": [
+    {
+      "system": "{{IdSystem}}",
+      "value": "{{IdValue}}"
+    }
+  ]
+}
+
+### @name resource_read
+GET {{Web_HostAddress}}/fhir/Resource/{{ResourceId}}
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json
+
+### @name resource_update
+PUT {{Web_HostAddress}}/fhir/Resource/{{ResourceId}}
+Authorization: Bearer {{BearerToken}}
+Content-Type: application/fhir+json
+Accept: application/fhir+json
+If-Match: W/"{{ResourceVersion}}"
+
+{
+  "resourceType": "Resource",
+  "id": "{{ResourceId}}",
+  "identifier": [
+    {
+      "system": "{{IdSystem}}",
+      "value": "{{IdValue}}"
+    }
+  ]
+}
+
+### @name resource_delete
+DELETE {{Web_HostAddress}}/fhir/Resource/{{ResourceId}}
+Authorization: Bearer {{BearerToken}}
+
+### @name resource_history
+GET {{Web_HostAddress}}/fhir/Resource/{{ResourceId}}/_history
+Authorization: Bearer {{BearerToken}}
+Accept: application/fhir+json
