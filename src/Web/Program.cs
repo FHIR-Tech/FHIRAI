@@ -23,14 +23,17 @@ else
 
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
+// Configure Swagger/OpenAPI first, before static files
 app.UseOpenApi();
 app.UseSwaggerUi();
 
+// Configure static files after Swagger
+app.UseStaticFiles();
 
 app.UseExceptionHandler(options => { });
 
+// Redirect root to Swagger
 app.Map("/", () => Results.Redirect("/swagger"));
 
 app.MapEndpoints();
