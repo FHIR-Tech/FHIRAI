@@ -5,3 +5,22 @@ dotnet ef migrations add InitialCreate --project src/Infrastructure --startup-pr
 
 
 
+1. Authentication Endpoints:
+Login: POST /api/auth/login
+Register: POST /api/auth/register
+Logout: POST /api/auth/logout
+Refresh: POST /api/auth/refresh
+
+2. User Management Endpoints:
+Get User Info: GET /api/auth/me
+Update User: PUT /api/auth/me
+Change Password: POST /api/auth/change-password
+Confirm Email: POST /api/auth/confirm-email
+Resend Email Confirmation: POST /api/auth/resend-email-confirmation
+Forgot Password: POST /api/auth/forgot-password
+Reset Password: POST /api/auth/reset-password
+
+3. Two-Factor Authentication:
+Enable 2FA: POST /api/auth/2fa/enable
+Disable 2FA: POST /api/auth/2fa/disable
+Get 2FA Status: GET /api/auth/2fa
